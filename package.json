@@ -1,0 +1,14 @@
+{
+  "name": "dwelo",
+  "version": "1.0.0",
+  "description": "Dwelo home rent and sale website",
+  "scripts": {
+    "client": "cd client && npm run dev",
+    "server": "cd server && npm run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "dependencies": {
+    "axios": "^1.11.0",
+    "concurrently": "^8.2.0"
+  }
+}

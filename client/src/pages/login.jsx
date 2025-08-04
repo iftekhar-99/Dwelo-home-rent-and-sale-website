@@ -58,22 +58,35 @@ const Login = () => {
     setMessage('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/login', {
+      const response = await axios.post('http://localhost:5001/api/auth/login', {
         email: formData.email,
         password: formData.password
       });
 
-      setMessage('Login successful! Redirecting to home...');
-      
-      // Store user data in localStorage (you might want to use a more secure method)
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      
-      setTimeout(() => {
-        navigate('/home');
-      }, 1500);
+      if (response.data.success) {
+        setMessage('Login successful! Redirecting to home...');
+        
+        // Store user data and token in localStorage
+        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        localStorage.setItem('token', response.data.data.token);
+        
+        setTimeout(() => {
+          navigate('/home');
+        }, 1500);
+      } else {
+        setMessage(response.data.message || 'Login failed');
+      }
     } catch (error) {
-      if (error.response) {
-        setMessage(error.response.data.message || 'Login failed');
+      console.error('Login error:', error);
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          setMessage(errorData.errors.join(', '));
+        } else {
+          setMessage(errorData.message || 'Login failed');
+        }
+      } else if (error.code === 'ECONNREFUSED') {
+        setMessage('Cannot connect to server. Please check if the server is running.');
       } else {
         setMessage('Network error. Please try again.');
       }

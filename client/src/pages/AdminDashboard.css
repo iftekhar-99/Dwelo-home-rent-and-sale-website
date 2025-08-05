@@ -3,6 +3,9 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  width: 100%; /* Ensure the main dashboard container takes full width */
 }
 
 /* Header */
@@ -11,16 +14,19 @@
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 1rem 2rem;
+  padding: 1rem 2rem; /* Consistent horizontal padding */
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 3;
+  width: 100%; /* Ensure header takes full width */
 }
 
 .admin-header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: 1200px; /* Set a consistent max-width for content */
+  margin: 0 auto; /* Center the content */
 }
 
 .admin-header h1 {
@@ -65,12 +71,26 @@
 /* Navigation */
 .admin-nav {
   background: rgba(255, 255, 255, 0.9);
-  padding: 1rem 2rem;
+  padding: 1rem 0; /* Remove horizontal padding to allow full width */
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
-  gap: 1rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  justify-content: center; /* Center the navigation container */
+  align-items: center;
+  width: 100%; /* Full width container */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 2;
+}
+
+.admin-nav-content {
+  display: flex;
+  justify-content: space-evenly; /* Evenly distribute buttons */
+  align-items: center;
+  width: 100%;
+  max-width: 1200px; /* Match header max-width */
+  padding: 0 2rem; /* Add padding to content, not container */
+  gap: 2rem; /* Space between buttons */
+  flex-wrap: nowrap; /* Prevent wrapping */
 }
 
 .nav-btn {
@@ -83,6 +103,12 @@
   font-weight: 500;
   transition: all 0.2s;
   position: relative;
+  text-align: center;
+  white-space: nowrap;
+  min-width: 120px; /* Commented out: This might be forcing wrapping. Adjust or remove if buttons still stack. */
+  flex-grow: 1; /* Allow buttons to grow and fill available space */
+  flex-shrink: 1; /* Allow buttons to shrink if needed */
+  flex-basis: auto; /* Default basis */
 }
 
 .nav-btn:hover {
@@ -98,14 +124,15 @@
 
 /* Main Content */
 .admin-main {
-  max-width: 1400px;
+  flex: 1;
+  max-width: 1200px; /* Match max-width of header/nav content */
   margin: 0 auto;
   padding: 2rem;
 }
 
 /* Dashboard Content */
 .dashboard-content h2 {
-  color: white;
+  color: #2d3748;
   margin-bottom: 2rem;
   font-size: 2rem;
   font-weight: 600;
@@ -113,9 +140,15 @@
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
   margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .metric-card {
@@ -297,6 +330,15 @@ tr:hover {
   white-space: nowrap;
 }
 
+.btn-view {
+  background: #4299e1;
+  color: white;
+}
+
+.btn-view:hover {
+  background: #3182ce;
+}
+
 .btn-approve {
   background: #38a169;
   color: white;
@@ -353,21 +395,169 @@ tr:hover {
   font-weight: 500;
 }
 
+/* Property Details Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.property-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 1000px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.modal-content {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+.property-image-large {
+  height: 400px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.property-image-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.placeholder-image-large {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f1f1;
+  color: #999;
+  font-size: 18px;
+  border-radius: 8px;
+}
+
+.property-details-full {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.price-section {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.price-section h3 {
+  margin: 0;
+  font-size: 28px;
+  color: #667eea;
+}
+
+.listing-type {
+  font-size: 16px;
+  color: #666;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.detail-item {
+  font-size: 14px;
+  color: #333;
+}
+
+.address-section h4,
+.description-section h4,
+.amenities-section h4,
+.owner-section h4 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  color: #333;
+}
+
+.address-section p,
+.description-section p,
+.owner-section p {
+  margin: 0;
+  color: #666;
+  line-height: 1.6;
+}
+
+.amenities-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.amenity-tag {
+  background: #f1f1f1;
+  color: #333;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.modal-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
-  .admin-header-content {
+  .admin-header-content,
+  .admin-nav { /* Apply flex-direction column to both header content and nav for mobile */
     flex-direction: column;
     gap: 1rem;
     text-align: center;
-  }
-  
-  .admin-nav {
-    flex-direction: column;
-    gap: 0.5rem;
+    padding: 1rem; /* Adjust padding for smaller screens */
   }
   
   .nav-btn {
-    text-align: center;
+    width: 100%; /* Make buttons full width on small screens */
+    min-width: unset; /* Remove min-width constraint on small screens */
   }
   
   .metrics-grid {
@@ -402,6 +592,24 @@ tr:hover {
   th, td {
     padding: 0.5rem;
   }
+  
+  /* Modal responsive styles */
+  .modal-content {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .property-image-large {
+    height: 250px;
+  }
+  
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
 }
 
 @media (max-width: 480px) {
@@ -409,11 +617,5 @@ tr:hover {
     padding: 1rem;
   }
   
-  .admin-header {
-    padding: 1rem;
-  }
-  
-  .admin-nav {
-    padding: 1rem;
-  }
-} 
+  /* Already handled by 768px media query for header and nav */
+}

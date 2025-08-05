@@ -94,6 +94,83 @@ export const requireOwner = authorizeRoles('owner');
 export const requireAdmin = authorizeRoles('admin');
 export const requireSuperAdmin = authorizeRoles('admin'); // Will be refined with admin level check
 
+// Owner-specific authentication middleware
+export const ownerAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Access token is required'
+      });
+    }
+
+    // Verify JWT token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    
+    // Check if user exists and is an owner
+    const user = await User.findById(decoded.userId).select('-password');
+    if (!user || user.role !== 'owner') {
+      return res.status(401).json({
+        success: false,
+        message: 'Owner access required'
+      });
+    }
+
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'Account is deactivated'
+      });
+    }
+
+    // Get owner profile
+    const Owner = (await import('../models/Owner.js')).default;
+    const owner = await Owner.findOne({ userId: user._id });
+    
+    if (!owner) {
+      return res.status(401).json({
+        success: false,
+        message: 'Owner profile not found'
+      });
+    }
+
+    // Add owner info to request
+    req.owner = {
+      ownerId: owner._id,
+      userId: user._id,
+      email: user.email,
+      role: user.role,
+      name: user.name
+    };
+
+    next();
+  } catch (error) {
+    console.error('Owner authentication error:', error);
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token'
+      });
+    }
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token has expired'
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: 'Authentication failed'
+    });
+  }
+};
+
 // Admin level authorization middleware
 export const authorizeAdminLevel = (requiredLevel) => {
   return async (req, res, next) => {

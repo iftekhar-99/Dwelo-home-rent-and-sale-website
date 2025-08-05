@@ -111,7 +111,7 @@ export const getOwnerDashboard = async (req, res) => {
       Property.find({ ownerId })
         .sort({ createdAt: -1 })
         .limit(5)
-        .select('title status views favorites createdAt'),
+        .select('title status views favorites createdAt images address bedrooms bathrooms price'),
 
       // Pending approvals
       Property.countDocuments({
@@ -176,6 +176,11 @@ export const getOwnerDashboard = async (req, res) => {
           id: p._id,
           title: p.title,
           status: p.status,
+          address: p.address,
+          bedrooms: p.bedrooms,
+          bathrooms: p.bathrooms,
+          price: p.price,
+          images: p.images,
           metrics: {
             views: p.views,
             favorites: p.favorites
@@ -226,6 +231,7 @@ export const createProperty = async (req, res) => {
       city,
       state,
       zipCode,
+      country = 'United States',
       bedrooms,
       bathrooms,
       squareFootage,
@@ -247,11 +253,26 @@ export const createProperty = async (req, res) => {
       });
     }
 
-    if (!images || images.length < 3) {
+    if (!images || images.length < 1) {
       return res.status(400).json({
         success: false,
-        message: 'Minimum 3 images required'
+        message: 'One image required'
       });
+    }
+
+    // Parse amenities if it's a string
+    let parsedAmenities = [];
+    if (amenities) {
+      if (typeof amenities === 'string') {
+        try {
+          parsedAmenities = JSON.parse(amenities);
+        } catch (error) {
+          console.error('Error parsing amenities:', error);
+          parsedAmenities = [];
+        }
+      } else if (Array.isArray(amenities)) {
+        parsedAmenities = amenities;
+      }
     }
 
     const property = new Property({
@@ -261,17 +282,28 @@ export const createProperty = async (req, res) => {
       propertyType,
       listingType,
       price,
-      address: {
-        street: address,
-        city,
-        state,
-        zipCode
+      location: {
+        address: {
+          street: address,
+          city,
+          state,
+          zipCode,
+          country
+        }
       },
-      bedrooms,
-      bathrooms,
-      squareFootage,
-      amenities: amenities || [],
-      images,
+      details: {
+        bedrooms: bedrooms || 0,
+        bathrooms: bathrooms || 0,
+        area: {
+          size: squareFootage || 0,
+          unit: 'sqft'
+        }
+      },
+      amenities: parsedAmenities,
+      images: images.map(img => ({
+        url: img,
+        isPrimary: true
+      })),
       status: 'pending'
     });
 
@@ -310,6 +342,8 @@ export const getOwnerProperties = async (req, res) => {
       .skip(skip)
       .limit(parseInt(limit));
 
+
+
     const total = await Property.countDocuments(query);
 
     res.json({
@@ -330,6 +364,36 @@ export const getOwnerProperties = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch properties'
+    });
+  }
+};
+
+// Get owner's specific property
+export const getOwnerProperty = async (req, res) => {
+  try {
+    const ownerId = req.owner.ownerId;
+    const { propertyId } = req.params;
+
+    const property = await Property.findOne({ _id: propertyId, ownerId })
+      .populate('ownerId', 'name email phone');
+
+    if (!property) {
+      return res.status(404).json({
+        success: false,
+        message: 'Property not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: { property }
+    });
+
+  } catch (error) {
+    console.error('Get owner property error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch property'
     });
   }
 };

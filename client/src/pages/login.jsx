@@ -64,14 +64,24 @@ const Login = () => {
       });
 
       if (response.data.success) {
-        setMessage('Login successful! Redirecting to home...');
+        setMessage('Login successful! Redirecting...');
         
         // Store user data and token in localStorage
         localStorage.setItem('user', JSON.stringify(response.data.data.user));
         localStorage.setItem('token', response.data.data.token);
         
+        // Redirect based on user role
+        const userRole = response.data.data.user.role;
+        let redirectPath = '/buyer/userdashboard';
+        
+        if (userRole === 'admin') {
+          redirectPath = '/admin/dashboard';
+        } else if (userRole === 'owner') {
+          redirectPath = '/owner/dashboard';
+        }
+        
         setTimeout(() => {
-          navigate('/home');
+          navigate(redirectPath);
         }, 1500);
       } else {
         setMessage(response.data.message || 'Login failed');

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './OwnerDashboard.css';
-import { FaHome, FaList, FaBell, FaUser, FaSignOutAlt } from 'react-icons/fa';
+import { FaHome, FaList, FaBell, FaUser, FaSignOutAlt, FaEnvelope } from 'react-icons/fa';
 import { BsFillHouseDoorFill, BsGraphUp } from 'react-icons/bs';
 
 const OwnerDashboard = () => {
@@ -15,6 +15,9 @@ const OwnerDashboard = () => {
   const [properties, setProperties] = useState([]);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDashboardData();
@@ -22,14 +25,56 @@ const OwnerDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await fetch('/api/owner/dashboard');
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Authentication required');
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch('/api/owner/dashboard', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
       const data = await response.json();
       
-      setStats(data.stats);
-      setProperties(data.properties);
-      setRequests(data.requests);
+      if (data.success) {
+        setStats({
+          totalProperties: data.data.overview.totalProperties || 0,
+          activeListings: data.data.properties.stats.approved?.count || 0,
+          pendingRequests: data.data.overview.totalRequests || 0,
+          totalViews: 0
+        });
+        setProperties(data.data.properties.recent || []);
+        setRequests(data.data.requests.recent || []);
+        setError(null);
+      } else {
+        setError(data.message || 'Failed to fetch dashboard data');
+        // Set empty states instead of mock data
+        setStats({
+          totalProperties: 0,
+          activeListings: 0,
+          pendingRequests: 0,
+          totalViews: 0
+        });
+        setProperties([]);
+        setRequests([]);
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      setError('Failed to connect to server. Please try again.');
+      // Set empty states instead of mock data
+      setStats({
+        totalProperties: 0,
+        activeListings: 0,
+        pendingRequests: 0,
+        totalViews: 0
+      });
+      setProperties([]);
+      setRequests([]);
     } finally {
       setLoading(false);
     }
@@ -72,6 +117,28 @@ const OwnerDashboard = () => {
     </div>
   );
 
+  const renderEmptyState = (title, message, actionText, actionPath) => (
+    <div className="empty-state">
+      <div className="empty-icon">📭</div>
+      <h3>{title}</h3>
+      <p>{message}</p>
+      {actionPath && (
+        <Link to={actionPath} className="empty-action-btn">
+          {actionText}
+        </Link>
+      )}
+    </div>
+  );
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  };
+
+  const user = JSON.parse(localStorage.getItem('user'));
+  const ownerName = user?.fullName || 'Owner';
+
   return (
     <div className="owner-dashboard">
       <aside className="dashboard-sidebar">
@@ -87,13 +154,13 @@ const OwnerDashboard = () => {
               <span>{link.text}</span>
             </Link>
           ))}
+          <button className="nav-link logout-button" onClick={handleLogout}>
+            <FaSignOutAlt />
+            <span>Logout</span>
+          </button>
         </nav>
 
-        <div className="sidebar-footer">
-          <button className="logout-button">
-            <FaSignOutAlt /> Logout
-          </button>
-        </div>
+
       </aside>
 
       <div className="dashboard-content">
@@ -109,70 +176,94 @@ const OwnerDashboard = () => {
                 <span className="notification-badge">{stats.pendingRequests}</span>
               )}
             </button>
-            <button className="add-property-btn">+ Add Property</button>
+            <Link to="/owner/create-property" className="add-property-btn">+ Add Property</Link>
           </div>
         </header>
 
         <main className="dashboard-main">
           <div className="welcome-section">
-            <h1>Welcome Back, Owner!</h1>
+            <h1>Welcome Back, {ownerName}!</h1>
             <p>Here's what's happening with your properties</p>
           </div>
 
+          {error && (
+            <div className="error-message">
+              <p>{error}</p>
+              <button onClick={fetchDashboardData} className="retry-btn">Retry</button>
+            </div>
+          )}
+
           {loading ? (
-            <div className="loading-skeleton">{/* Add loading animation */}</div>
+            <div className="loading-skeleton">
+              <div className="skeleton-stats"></div>
+              <div className="skeleton-content"></div>
+            </div>
           ) : (
             <>
               {renderStatCards()}
 
-              <div className="dashboard-grid">
-                <section className="recent-properties">
+              <div className="dashboard-main-content">
+                <div className="dashboard-section properties-section">
                   <div className="section-header">
-                    <h2>Recent Properties</h2>
+                    <h2>My Properties</h2>
                     <Link to="/owner/properties" className="view-all">View All</Link>
                   </div>
-                  <div className="property-list">
-                    {properties.slice(0, 3).map(property => (
-                      <div key={property.id} className="property-card">
-                        <div className="property-image">
-                          <img src={property.image} alt={property.title} />
-                          <span className={`status-badge status-${property.status}`}>
-                            {property.status}
-                          </span>
-                        </div>
-                        <div className="property-info">
-                          <h3>{property.title}</h3>
-                          <p className="property-price">${property.price.toLocaleString()}</p>
-                          <div className="property-stats">
-                            <span>{property.views} views</span>
-                            <span>{property.requests} requests</span>
+                  <div className="property-list-small">
+                    {properties.length > 0 ? (
+                      properties.slice(0, 2).map(property => (
+                        <div 
+                          key={property._id || property.id} 
+                          className="property-card-small"
+                          onClick={() => navigate(`/owner/property/${property._id || property.id}`)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <div className="property-image-small">
+                            <img 
+                              src={property.images && property.images.length > 0 && property.images[0].url ? 
+                                (property.images[0].url.startsWith('http') ? property.images[0].url : `http://localhost:5001${property.images[0].url}`) : 
+                                '/placeholder-property.jpg'} 
+                              alt={property.title} 
+                              onError={(e) => {
+                                console.log('Image failed to load:', e.target.src);
+                                e.target.src = '/placeholder-property.jpg';
+                              }}
+                            />
+                          </div>
+                          <div className="property-info-small">
+                            <h3>{property.title || property.name}</h3>
+                            <p className="property-price-small">${property.price?.toLocaleString() || 'N/A'}</p>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      renderEmptyState(
+                        "No Properties Yet",
+                        "You haven't listed any properties. Add your first property to get started!",
+                        "Add Property",
+                        "/owner/create-property"
+                      )
+                    )}
                   </div>
-                </section>
+                </div>
 
-                <section className="recent-requests">
+                <div className="dashboard-section requests-section">
                   <div className="section-header">
-                    <h2>Recent Requests</h2>
+                    <h2><FaEnvelope className="header-icon" /> Recent Requests</h2>
                     <Link to="/owner/requests" className="view-all">View All</Link>
                   </div>
-                  <div className="requests-list">
-                    {requests.slice(0, 5).map(request => (
-                      <div key={request.id} className="request-card">
-                        <div className="request-info">
-                          <h4>{request.property}</h4>
-                          <p>{request.buyer}</p>
-                          <span className={`status-badge status-${request.status}`}>
-                            {request.status}
-                          </span>
+                  <div className="request-list">
+                    {requests.length > 0 ? (
+                      requests.slice(0, 3).map(request => (
+                        <div key={request._id} className="request-card">
+                          <p><strong>{request.user.fullName}</strong> requested to view <strong>{request.property.name}</strong></p>
+                          <span>{new Date(request.createdAt).toLocaleDateString()}</span>
                         </div>
-                        <button className="view-request-btn">View Details</button>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p>No recent requests.</p>
+                    )}
                   </div>
-                </section>
+                </div>
               </div>
             </>
           )}

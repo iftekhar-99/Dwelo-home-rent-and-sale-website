@@ -1,5 +1,5 @@
 import express from 'express';
-import { logOwnerActivity } from '../middleware/activityLogger.js';
+import propertyUploadMiddleware from '../middleware/propertyUploadMiddleware.js';
 import {
   ownerLogin,
   getOwnerDashboard,
@@ -11,7 +11,8 @@ import {
   updateOwnerProfile,
   uploadPropertyImages,
   getPropertyRequests,
-  handlePropertyRequest
+  handlePropertyRequest,
+  getOwnerProperty
 } from '../controllers/ownerController.js';
 import { ownerAuth } from '../middleware/authMiddleware.js';
 
@@ -20,18 +21,18 @@ const router = express.Router();
 // Public routes
 router.post('/login', ownerLogin);
 
-// Protected routes - add activity logger to all owner routes
+// Protected routes
 router.use(ownerAuth);
-router.use(logOwnerActivity);
 
 router.get('/dashboard', getOwnerDashboard);
+router.get('/properties/:propertyId', getOwnerProperty);
 router.get('/properties', getOwnerProperties);
 router.post('/properties', createProperty);
 router.put('/properties/:propertyId', updateProperty);
 router.delete('/properties/:propertyId', deleteProperty);
 router.get('/profile', getOwnerProfile);
 router.put('/profile', updateOwnerProfile);
-router.post('/upload-images', uploadPropertyImages);
+router.post('/upload-images', propertyUploadMiddleware, uploadPropertyImages);
 router.get('/requests', getPropertyRequests);
 router.put('/requests/:requestId', handlePropertyRequest);
 

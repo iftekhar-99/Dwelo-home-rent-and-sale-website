@@ -8,6 +8,8 @@ import path from 'path';
 import connectDB from './config/database.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import ownerRoutes from './routes/ownerRoutes.js';
+import propertyRoutes from './routes/propertyRoutes.js';  // Add this import
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 
 // Get directory name first
@@ -22,12 +24,6 @@ console.log('Environment Variables Loaded:', {
   PORT: process.env.PORT
 });
 
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)){
-    fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
 const app = express();
 const PORT = process.env.PORT || 5001;
 
@@ -35,6 +31,8 @@ const PORT = process.env.PORT || 5001;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Serve uploaded images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Connect to MongoDB
@@ -56,6 +54,8 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/owner', ownerRoutes);
+app.use('/api/properties', propertyRoutes); // Add this line
 
 // Health check route
 app.get('/api/health', (req, res) => {

@@ -7,6 +7,7 @@ import Report from '../models/Report.js';
 import Buyer from '../models/Buyer.js';
 import Owner from '../models/Owner.js';
 import Renter from '../models/Renter.js';
+import PropertyUpdateRequest from '../models/PropertyUpdateRequest.js';
 
 // JWT token generation for admin
 const generateAdminToken = (adminId, adminLevel) => {
@@ -316,6 +317,137 @@ export const approveProperty = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to process property approval'
+    });
+  }
+};
+
+// Get pending property update requests
+export const getPendingPropertyUpdateRequests = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status = 'pending' } = req.query;
+    const skip = (page - 1) * limit;
+
+    const requests = await PropertyUpdateRequest.find({ status })
+      .populate('propertyId', 'title address images status')
+      .populate('ownerId', 'name email phone')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await PropertyUpdateRequest.countDocuments({ status });
+
+    res.json({
+      success: true,
+      data: {
+        requests,
+        pagination: {
+          current: parseInt(page),
+          total: Math.ceil(total / limit),
+          hasNext: page * limit < total,
+          hasPrev: page > 1
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get pending property update requests error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch pending property update requests'
+    });
+  }
+};
+
+// Handle property update request
+export const handlePropertyUpdateRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { action, reason, notes } = req.body;
+    const adminId = req.admin.adminId;
+
+    const request = await PropertyUpdateRequest.findById(requestId)
+      .populate('propertyId')
+      .populate('ownerId', 'name email');
+
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'Property update request not found'
+      });
+    }
+
+    if (request.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: 'Request is not pending approval'
+      });
+    }
+
+    if (action === 'approve') {
+      // Apply the updates to the actual property
+      const property = request.propertyId;
+      if (!property) {
+        return res.status(404).json({
+          success: false,
+          message: 'Associated property not found'
+        });
+      }
+
+      // Merge proposed updates into the property document
+      Object.assign(property, request.proposedUpdates);
+      await property.save();
+
+      request.status = 'approved';
+      request.approvedBy = adminId;
+      request.approvedAt = new Date();
+      request.adminNotes = notes;
+      await request.save();
+
+    } else if (action === 'reject') {
+      if (!reason) {
+        return res.status(400).json({
+          success: false,
+          message: 'Rejection reason is required'
+        });
+      }
+      request.status = 'rejected';
+      request.rejectedBy = adminId;
+      request.rejectedAt = new Date();
+      request.rejectionReason = reason;
+      request.adminNotes = notes;
+      await request.save();
+
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid action. Use "approve" or "reject"'
+      });
+    }
+
+    // Log admin activity
+    const admin = await Admin.findById(adminId);
+    if (admin) {
+      await admin.addActivityLog({
+        action: `property_update_request_${action}`,
+        target: 'property_update_request',
+        targetId: request._id,
+        details: `${action}ed property update request for property: ${request.propertyId.title}`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `Property update request ${action}ed successfully`,
+      data: { request }
+    });
+
+  } catch (error) {
+    console.error('Handle property update request error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to process property update request'
     });
   }
 };
@@ -656,4 +788,4 @@ export const updateAdminProfile = async (req, res) => {
       message: 'Failed to update profile'
     });
   }
-}; 
+};

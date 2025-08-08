@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import './OwnerDashboard.css';
 import { FaHome, FaList, FaBell, FaUser, FaSignOutAlt, FaEnvelope } from 'react-icons/fa';
 import { BsFillHouseDoorFill, BsGraphUp } from 'react-icons/bs';
+import { ChatButton } from '../components/chat';
 
 const OwnerDashboard = () => {
   const [stats, setStats] = useState({
@@ -83,7 +84,8 @@ const OwnerDashboard = () => {
   const sidebarLinks = [
     { icon: <FaHome />, text: 'Dashboard', path: '/owner/dashboard' },
     { icon: <BsFillHouseDoorFill />, text: 'My Properties', path: '/owner/properties' },
-    { icon: <FaList />, text: 'Requests', path: '/owner/requests' },
+    { icon: <FaList />, text: 'My Listings', path: '/owner/listings' },
+    { icon: <FaEnvelope />, text: 'Requests', path: '/owner/requests' },
     { icon: <BsGraphUp />, text: 'Analytics', path: '/owner/analytics' },
     { icon: <FaUser />, text: 'Profile', path: '/owner/profile' }
   ];
@@ -176,6 +178,7 @@ const OwnerDashboard = () => {
                 <span className="notification-badge">{stats.pendingRequests}</span>
               )}
             </button>
+            <ChatButton />
             <Link to="/owner/create-property" className="add-property-btn">+ Add Property</Link>
           </div>
         </header>
@@ -220,7 +223,7 @@ const OwnerDashboard = () => {
                           <div className="property-image-small">
                             <img 
                               src={property.images && property.images.length > 0 && property.images[0].url ? 
-                                (property.images[0].url.startsWith('http') ? property.images[0].url : `http://localhost:5001${property.images[0].url}`) : 
+                                (property.images[0].url.startsWith('http') ? property.images[0].url : `http://localhost:5002${property.images[0].url}`) : 
                                 '/placeholder-property.jpg'} 
                               alt={property.title} 
                               onError={(e) => {

@@ -166,7 +166,7 @@ const Register = () => {
       }
 
       console.log('Sending registration request...'); // Debug log
-      const response = await axios.post('http://localhost:5001/api/auth/register', formDataToSend, {
+      const response = await axios.post('/api/auth/register', formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }

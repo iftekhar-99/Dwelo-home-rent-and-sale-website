@@ -1,9 +1,11 @@
 .my-properties {
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
   background: #f8f9fa;
   min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .properties-header {
@@ -45,6 +47,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 2rem;
+  width: 100%;
 }
 
 .property-card {
@@ -62,7 +65,7 @@
 
 .property-image {
   position: relative;
-  height: 200px;
+  height: 250px;
   overflow: hidden;
 }
 
@@ -285,4 +288,4 @@
   .property-actions {
     flex-direction: column;
   }
-} 
+}

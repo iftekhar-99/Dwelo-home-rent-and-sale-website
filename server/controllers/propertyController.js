@@ -197,7 +197,7 @@ export const getAllProperties = async (req, res) => {
 export const getPropertyById = async (req, res) => {
   try {
     const property = await Property.findById(req.params.id)
-      .populate('ownerId', 'name email phone');
+      .populate('ownerId', 'name email phone userId');
 
     if (!property) {
       return res.status(404).json({
@@ -206,9 +206,15 @@ export const getPropertyById = async (req, res) => {
       });
     }
 
+    // Ensure client gets both the Owner document id and the underlying User id
+    const propertyJson = property.toObject();
+    if (propertyJson.ownerId && propertyJson.ownerId.userId) {
+      propertyJson.ownerUserId = propertyJson.ownerId.userId; // user collection _id for chat/requests
+    }
+
     res.json({
       success: true,
-      data: { property }
+      data: { property: propertyJson }
     });
   } catch (error) {
     console.error('Get property by ID error:', error);

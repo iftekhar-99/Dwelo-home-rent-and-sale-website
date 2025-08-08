@@ -5,6 +5,8 @@ import {
   getPendingProperties,
   approveProperty,
   getPendingReports,
+  getPendingPropertyUpdateRequests,
+  handlePropertyUpdateRequest,
   handleReport,
   banUser,
   getAdminProfile,
@@ -52,6 +54,21 @@ router.put('/properties/:propertyId/approve',
   adminRateLimit,
   adminActivityLog('approve_property', 'property'),
   asyncHandler(approveProperty)
+);
+
+// Property update request management routes
+router.get('/requests/property-update/pending',
+  requirePropertyManagement,
+  adminRateLimit,
+  adminActivityLog('view_pending_property_update_requests', 'property_update_request'),
+  asyncHandler(getPendingPropertyUpdateRequests)
+);
+
+router.put('/requests/:requestId/handle-property-update',
+  requirePropertyManagement,
+  adminRateLimit,
+  adminActivityLog('handle_property_update_request', 'property_update_request'),
+  asyncHandler(handlePropertyUpdateRequest)
 );
 
 // Report management routes
@@ -308,4 +325,4 @@ router.get('/health',
   })
 );
 
-export default router; 
+export default router;

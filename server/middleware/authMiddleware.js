@@ -34,13 +34,15 @@ export const authenticateToken = async (req, res, next) => {
     }
 
     // Add user info to request
+    // Backward/forward compatibility: expose both id and userId
     req.user = {
-      userId: user._id,
+      id: user._id, // preferred key used across controllers
+      userId: user._id, // legacy key some parts might use
       email: user.email,
       role: user.role,
       name: user.name
     };
-
+    console.log('req.user populated:', req.user);
     next();
   } catch (error) {
     console.error('Token verification error:', error);

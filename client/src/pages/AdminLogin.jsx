@@ -58,7 +58,7 @@ const AdminLogin = () => {
     setMessage('');
 
     try {
-      const response = await axios.post('http://localhost:5001/api/admin/login', {
+      const response = await axios.post('/api/admin/login', {
         email: formData.email,
         password: formData.password
       });
@@ -154,4 +154,4 @@ const AdminLogin = () => {
   );
 };
 
-export default AdminLogin; 
+export default AdminLogin;

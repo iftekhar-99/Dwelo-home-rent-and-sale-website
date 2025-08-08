@@ -9,7 +9,11 @@ import connectDB from './config/database.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import ownerRoutes from './routes/ownerRoutes.js';
-import propertyRoutes from './routes/propertyRoutes.js';  // Add this import
+import propertyRoutes from './routes/propertyRoutes.js';
+import requestRoutes from './routes/requestRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
+import wishlistRoutes from './routes/wishlistRoutes.js';
+import propertyRequestRoutes from './routes/propertyRequestRoutes.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 
 // Get directory name first
@@ -55,7 +59,11 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/owner', ownerRoutes);
-app.use('/api/properties', propertyRoutes); // Add this line
+app.use('/api/properties', propertyRoutes);
+app.use('/api/requests', requestRoutes);
+app.use('/api/chats', chatRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/property-requests', propertyRequestRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

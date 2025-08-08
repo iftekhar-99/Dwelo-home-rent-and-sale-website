@@ -113,7 +113,7 @@ const MyProperties = () => {
               <div className="property-image">
                 <img 
                   src={property.images && property.images.length > 0 && property.images[0].url ? 
-                    (property.images[0].url.startsWith('http') ? property.images[0].url : `http://localhost:5001${property.images[0].url}`) : 
+                    (property.images[0].url.startsWith('http') ? property.images[0].url : `http://localhost:5002${property.images[0].url}`) : 
                     '/placeholder-property.jpg'} 
                   alt={property.title} 
                   onError={(e) => {

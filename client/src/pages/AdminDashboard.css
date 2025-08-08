@@ -89,7 +89,7 @@
   width: 100%;
   max-width: 1200px; /* Match header max-width */
   padding: 0 2rem; /* Add padding to content, not container */
-  gap: 2rem; /* Space between buttons */
+  gap: 1rem; /* Reduced space between buttons */
   flex-wrap: nowrap; /* Prevent wrapping */
 }
 
@@ -97,7 +97,7 @@
   background: transparent;
   border: 2px solid #e2e8f0;
   color: #4a5568;
-  padding: 0.75rem 1.5rem;
+  padding: 0.75rem 0.75rem; /* Reduced horizontal padding */
   border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
@@ -105,10 +105,10 @@
   position: relative;
   text-align: center;
   white-space: nowrap;
-  min-width: 120px; /* Commented out: This might be forcing wrapping. Adjust or remove if buttons still stack. */
+  font-size: 0.9rem; /* Slightly smaller font size */
   flex-grow: 1; /* Allow buttons to grow and fill available space */
   flex-shrink: 1; /* Allow buttons to shrink if needed */
-  flex-basis: auto; /* Default basis */
+  flex-basis: 0; /* Equal width distribution */
 }
 
 .nav-btn:hover {
@@ -201,6 +201,51 @@
   border-radius: 12px;
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Tab Container Styles */
+.tab-container {
+  margin-top: 1rem;
+}
+
+.tab-buttons {
+  display: flex;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  color: #4a5568;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  color: #667eea;
+}
+
+.tab-btn.active {
+  color: #667eea;
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #667eea;
+  border-radius: 3px 3px 0 0;
+}
+
+.tab-content {
+  padding: 1rem 0;
 }
 
 .properties-content h2,
@@ -547,17 +592,25 @@ tr:hover {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .admin-header-content,
-  .admin-nav { /* Apply flex-direction column to both header content and nav for mobile */
+  .admin-header-content {
     flex-direction: column;
     gap: 1rem;
     text-align: center;
     padding: 1rem; /* Adjust padding for smaller screens */
   }
   
+  .admin-nav-content {
+    flex-wrap: wrap; /* Allow buttons to wrap to next line */
+    justify-content: center; /* Center the buttons */
+    gap: 0.5rem; /* Reduce gap between buttons */
+  }
+  
   .nav-btn {
-    width: 100%; /* Make buttons full width on small screens */
-    min-width: unset; /* Remove min-width constraint on small screens */
+    flex: 0 1 auto; /* Don't grow, allow shrinking, auto basis */
+    font-size: 0.9rem; /* Slightly smaller font */
+    padding: 0.5rem 1rem; /* Smaller padding */
+    white-space: normal; /* Allow text to wrap */
+    min-width: unset; /* Remove min-width constraint */
   }
   
   .metrics-grid {

@@ -27,7 +27,7 @@ const OwnerLogin = () => {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:5001/api/owner/login', formData);
+      const response = await axios.post('/api/owners/login', formData);
       
       if (response.data.success) {
         // Store owner data and token
@@ -104,4 +104,4 @@ const OwnerLogin = () => {
   );
 };
 
-export default OwnerLogin; 
+export default OwnerLogin;

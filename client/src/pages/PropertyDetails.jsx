@@ -18,11 +18,11 @@ const PropertyDetails = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        navigate('/owner/login');
+        navigate('/login');
         return;
       }
 
-      const response = await fetch(`/api/owner/properties/${id}`, {
+      const response = await fetch(`/api/properties/${id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -53,8 +53,21 @@ const PropertyDetails = () => {
     }
   };
 
+
+
   const handleEdit = () => {
-    navigate(`/owner/edit-property/${id}`);
+    // Check if user is the owner before allowing edit
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    // Handle case where ownerId might be an object with _id property
+    const ownerId = property?.ownerId?._id || property?.ownerId;
+    const currentUserId = currentUser?._id;
+    
+    if (property && ownerId && currentUserId && ownerId === currentUserId) {
+      navigate(`/owner/edit-property/${id}`);
+    } else {
+      alert('You do not have permission to edit this property');
+    }
   };
 
   const handleDelete = async () => {
@@ -98,7 +111,7 @@ const PropertyDetails = () => {
       <div className="property-details-error">
         <h2>Error</h2>
         <p>{error}</p>
-        <button onClick={() => navigate('/owner/dashboard')}>Back to Dashboard</button>
+        <button onClick={() => navigate(-1)}>Back</button>
       </div>
     );
   }
@@ -108,10 +121,14 @@ const PropertyDetails = () => {
       <div className="property-details-error">
         <h2>Property Not Found</h2>
         <p>The property you're looking for doesn't exist.</p>
-        <button onClick={() => navigate('/owner/dashboard')}>Back to Dashboard</button>
+        <button onClick={() => navigate(-1)}>Back</button>
       </div>
     );
   }
+
+  // Check if current user is the property owner
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const isOwner = property.ownerId === currentUser._id;
 
   return (
     <div className="property-details">
@@ -136,8 +153,8 @@ const PropertyDetails = () => {
               <div className="main-image">
                 <img 
                   src={typeof property.images[0] === 'string' ? 
-                    (property.images[0].startsWith('http') ? property.images[0] : `http://localhost:5001${property.images[0]}`) : 
-                    (property.images[0].url.startsWith('http') ? property.images[0].url : `http://localhost:5001${property.images[0].url}`)} 
+                    (property.images[0].startsWith('http') ? property.images[0] : `http://localhost:5002${property.images[0]}`) : 
+                    (property.images[0].url.startsWith('http') ? property.images[0].url : `http://localhost:5002${property.images[0].url}`)} 
                   alt={`${property.title}`}
                   onError={(e) => {
                     console.log('Image failed to load:', e.target.src);

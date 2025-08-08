@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { ChatButton } from '../components/chat';
+import { FaHome, FaList, FaHeart, FaUser, FaSignOutAlt, FaEnvelope } from 'react-icons/fa';
 import './UserDashboard.css';
 
 const UserDashboard = () => {
@@ -8,7 +10,6 @@ const UserDashboard = () => {
   const [properties, setProperties] = useState([]);
   const [filteredProperties, setFilteredProperties] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedProperty, setSelectedProperty] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -74,7 +75,7 @@ const UserDashboard = () => {
   const fetchProperties = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5001/api/properties');
+      const response = await axios.get('/api/properties');
       
       if (response.data && response.data.data) {
         // Filter only approved properties
@@ -96,11 +97,9 @@ const UserDashboard = () => {
   };
   
   const viewPropertyDetails = (property) => {
-    setSelectedProperty(property);
-  };
-
-  const closePropertyDetails = () => {
-    setSelectedProperty(null);
+    // Navigate to the dedicated property details page instead of showing modal
+    const userRole = user?.role || 'buyer';
+    navigate(`/${userRole}/property/${property._id}`);
   };
 
 
@@ -235,19 +234,47 @@ const UserDashboard = () => {
     return <div>Loading...</div>;
   }
 
+  // Define sidebar links based on user role
+  const sidebarLinks = [
+    { icon: <FaHome />, text: 'Dashboard', path: user?.role === 'buyer' ? '/buyer/userdashboard' : '/renter/userdashboard' },
+    { icon: <FaList />, text: 'Properties', path: user?.role === 'buyer' ? '/buyer/userdashboard' : '/renter/userdashboard' },
+    { icon: <FaHeart />, text: 'Wishlist', path: user?.role === 'buyer' ? '/buyer/wishlist' : '/renter/wishlist' },
+    { icon: <FaEnvelope />, text: 'My Requests', path: user?.role === 'buyer' ? '/buyer/requests' : '/renter/requests' },
+    { icon: <FaUser />, text: 'Profile', path: user?.role === 'buyer' ? '/buyer/profile' : '/renter/profile' }
+  ];
+
   return (
     <div className="user-dashboard">
-      <nav className="navbar">
-        <div className="nav-brand">
-          <h1>Dwelo</h1>
+      <aside className="dashboard-sidebar">
+        <div className="sidebar-header">
+          <img src="/logo.png" alt="Dwelo" className="logo" />
+          <h2>{user.role === 'buyer' ? 'Buyer Portal' : 'Renter Portal'}</h2>
         </div>
-        <div className="nav-user">
-          <span>Welcome, {user.email}</span>
-          <button onClick={handleLogout} className="logout-btn">
-            Logout
+        
+        <nav className="sidebar-nav">
+          {sidebarLinks.map((link, index) => (
+            <Link key={index} to={link.path} className="nav-link">
+              {link.icon}
+              <span>{link.text}</span>
+            </Link>
+          ))}
+          <button className="nav-link logout-button" onClick={handleLogout}>
+            <FaSignOutAlt />
+            <span>Logout</span>
           </button>
-        </div>
-      </nav>
+        </nav>
+      </aside>
+
+      <div className="dashboard-content">
+        <header className="dashboard-header">
+          <div className="header-search">
+            <input type="search" placeholder="Search properties..." />
+          </div>
+          
+          <div className="header-actions">
+            <ChatButton />
+          </div>
+        </header>
 
       <main className="main-content">
         {/* User Profile Section */}
@@ -492,7 +519,7 @@ const UserDashboard = () => {
                 <div key={property._id} className="property-card">
                   <div className="property-image">
                     {property.images && property.images.length > 0 ? (
-                      <img src={`http://localhost:5001${property.images[0].url}`} alt={property.title} />
+                      <img src={`http://localhost:5002${property.images[0].url}`} alt={property.title} />
                     ) : (
                       <div className="placeholder-image">No Image Available</div>
                     )}
@@ -522,345 +549,13 @@ const UserDashboard = () => {
           )}
         </section>
 
-        {/* Property Details Modal */}
-        {selectedProperty && (
-          <div className="modal-overlay">
-            <div className="property-modal">
-              <div className="modal-header">
-                <h2>{selectedProperty.title}</h2>
-                <button onClick={closePropertyDetails} className="close-btn">&times;</button>
-              </div>
-              <div className="modal-content">
-                <div className="property-image-large">
-                  {selectedProperty.images && selectedProperty.images.length > 0 ? (
-                    <img src={`http://localhost:5001${selectedProperty.images[0].url}`} alt={selectedProperty.title} />
-                  ) : (
-                    <div className="placeholder-image-large">No Image Available</div>
-                  )}
-                </div>
-                <div className="property-details-full">
-                  <div className="price-section">
-                    <h3>${selectedProperty.price?.toLocaleString()}</h3>
-                    <span className="listing-type">{selectedProperty.listingType}</span>
-                  </div>
-                  
-                  <div className="details-grid">
-                    <div className="detail-item">
-                      <strong>Property Type:</strong> {selectedProperty.propertyType}
-                    </div>
-                    <div className="detail-item">
-                      <strong>Bedrooms:</strong> {selectedProperty.details?.bedrooms}
-                    </div>
-                    <div className="detail-item">
-                      <strong>Bathrooms:</strong> {selectedProperty.details?.bathrooms}
-                    </div>
-                    <div className="detail-item">
-                      <strong>Area:</strong> {selectedProperty.details?.area?.size} {selectedProperty.details?.area?.unit}
-                    </div>
-                    <div className="detail-item">
-                      <strong>Year Built:</strong> {selectedProperty.details?.yearBuilt}
-                    </div>
-                    <div className="detail-item">
-                      <strong>Parking:</strong> {selectedProperty.details?.parking ? selectedProperty.details.parking : 'Not specified'}
-                    </div>
-                  </div>
-                  
-                  <div className="address-section">
-                    <h4>Location</h4>
-                    <p>
-                      {selectedProperty.location?.address?.street}, {selectedProperty.location?.address?.city}, {selectedProperty.location?.address?.state} {selectedProperty.location?.address?.zipCode}
-                    </p>
-                  </div>
-                  
-                  <div className="description-section">
-                    <h4>Description</h4>
-                    <p>{selectedProperty.description}</p>
-                  </div>
-                  
-                  <div className="amenities-section">
-                    <h4>Amenities</h4>
-                    <div className="amenities-list">
-                      {selectedProperty.amenities?.map((amenity, index) => (
-                        <span key={index} className="amenity-tag">{amenity}</span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Property Details Modal removed - now using dedicated page */}
       </main>
+      </div>
     </div>
   );
 
-  if (!user) {
-    return <div>Loading...</div>;
-  }
 
-  return (
-    <div className="user-dashboard">
-      <nav className="navbar">
-        <div className="nav-brand">
-          <h1>Dwelo</h1>
-        </div>
-        <div className="nav-user">
-          <span>Welcome, {user.email}</span>
-          <button onClick={handleLogout} className="logout-btn">
-            Logout
-          </button>
-        </div>
-      </nav>
-
-      <main className="main-content">
-        {/* Search and Filter Section */}
-        <section className="search-section">
-          <div className="search-header">
-            <h2>Find Your Perfect Property</h2>
-            <button 
-              className="filter-toggle-btn" 
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              {showFilters ? 'Hide Filters' : 'Show Filters'}
-            </button>
-          </div>
-          
-          {showFilters && (
-            <div className="filters-container">
-              <div className="filters-grid">
-                <div className="filter-group">
-                  <label htmlFor="listingType">Listing Type</label>
-                  <select 
-                    id="listingType" 
-                    value={filters.listingType} 
-                    onChange={(e) => handleFilterChange('listingType', e.target.value)}
-                  >
-                    <option value="">All</option>
-                    <option value="For Sale">For Sale</option>
-                    <option value="For Rent">For Rent</option>
-                  </select>
-                </div>
-                
-                <div className="filter-group">
-                  <label>Price Range</label>
-                  <div className="price-range">
-                    <input 
-                      type="number" 
-                      placeholder="Min Price" 
-                      value={filters.minPrice} 
-                      onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                    />
-                    <input 
-                      type="number" 
-                      placeholder="Max Price" 
-                      value={filters.maxPrice} 
-                      onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="filter-group">
-                  <label>Bedrooms</label>
-                  <div className="bedroom-range">
-                    <input 
-                      type="number" 
-                      placeholder="Min Bedrooms" 
-                      value={filters.minBedrooms} 
-                      onChange={(e) => handleFilterChange('minBedrooms', e.target.value)}
-                    />
-                    <input 
-                      type="number" 
-                      placeholder="Max Bedrooms" 
-                      value={filters.maxBedrooms} 
-                      onChange={(e) => handleFilterChange('maxBedrooms', e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="filter-group">
-                  <label>Location</label>
-                  <div className="location-inputs">
-                    <input 
-                      type="text" 
-                      placeholder="City" 
-                      value={filters.city} 
-                      onChange={(e) => handleFilterChange('city', e.target.value)}
-                    />
-                    <input 
-                      type="text" 
-                      placeholder="State" 
-                      value={filters.state} 
-                      onChange={(e) => handleFilterChange('state', e.target.value)}
-                    />
-                    <input 
-                      type="text" 
-                      placeholder="Zip Code" 
-                      value={filters.zipCode} 
-                      onChange={(e) => handleFilterChange('zipCode', e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="filter-group">
-                  <label>Year Built</label>
-                  <div className="year-range">
-                    <input 
-                      type="number" 
-                      placeholder="Min Year" 
-                      value={filters.minYearBuilt} 
-                      onChange={(e) => handleFilterChange('minYearBuilt', e.target.value)}
-                    />
-                    <input 
-                      type="number" 
-                      placeholder="Max Year" 
-                      value={filters.maxYearBuilt} 
-                      onChange={(e) => handleFilterChange('maxYearBuilt', e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="filter-group amenities-group">
-                  <label>Amenities</label>
-                  <div className="amenities-checkboxes">
-                    {['Pool', 'Garage', 'Garden', 'Balcony', 'Gym', 'Elevator', 'Security', 'Parking'].map(amenity => (
-                      <label key={amenity} className="checkbox-label">
-                        <input 
-                          type="checkbox" 
-                          checked={filters.amenities.includes(amenity)} 
-                          onChange={() => handleAmenityToggle(amenity)}
-                        />
-                        {amenity}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="filter-actions">
-                <button onClick={clearFilters} className="clear-filters-btn">Clear Filters</button>
-                <button onClick={applyFilters} className="apply-filters-btn">Apply Filters</button>
-              </div>
-            </div>
-          )}
-        </section>
-        
-        {/* Properties Section */}
-        <section className="properties-section">
-          <div className="properties-header">
-            <h3>Available Properties ({filteredProperties.length})</h3>
-          </div>
-          
-          {loading ? (
-            <div className="loading">Loading properties...</div>
-          ) : filteredProperties.length === 0 ? (
-            <div className="no-properties">No properties found matching your criteria.</div>
-          ) : (
-            <div className="properties-grid">
-              {filteredProperties.map(property => (
-                <div key={property._id} className="property-card">
-                  <div className="property-image">
-                    {property.images && property.images.length > 0 ? (
-                      <img src={`http://localhost:5001${property.images[0].url}`} alt={property.title} />
-                    ) : (
-                      <div className="placeholder-image">No Image Available</div>
-                    )}
-                    <div className="property-type-badge">{property.listingType}</div>
-                  </div>
-                  <div className="property-info">
-                    <h4>{property.title}</h4>
-                    <div className="property-price">${property.price?.toLocaleString()}</div>
-                    <div className="property-location">
-                      {property.location?.address?.city}, {property.location?.address?.state}
-                    </div>
-                    <div className="property-details">
-                      <span>{property.details?.bedrooms} Beds</span>
-                      <span>{property.details?.bathrooms} Baths</span>
-                      <span>{property.details?.area} sq ft</span>
-                    </div>
-                    <button 
-                      onClick={() => viewPropertyDetails(property)}
-                      className="view-details-btn"
-                    >
-                      View Details
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-        
-        {/* Property Details Modal */}
-        {selectedProperty && (
-          <div className="modal-overlay">
-            <div className="property-modal">
-              <div className="modal-header">
-                <h2>{selectedProperty.title}</h2>
-                <button onClick={closePropertyDetails} className="close-btn">&times;</button>
-              </div>
-              <div className="modal-content">
-                <div className="property-image-large">
-                  {selectedProperty.images && selectedProperty.images.length > 0 ? (
-                    <img src={`http://localhost:5001${selectedProperty.images[0].url}`} alt={selectedProperty.title} />
-                  ) : (
-                    <div className="placeholder-image-large">No Image Available</div>
-                  )}
-                </div>
-                <div className="property-details-full">
-                  <div className="price-section">
-                    <h3>${selectedProperty.price?.toLocaleString()}</h3>
-                    <span className="listing-type">{selectedProperty.listingType}</span>
-                  </div>
-                  
-                  <div className="details-grid">
-                    <div className="detail-item">
-                      <strong>Property Type:</strong> {selectedProperty.propertyType}
-                    </div>
-                    <div className="detail-item">
-                      <strong>Bedrooms:</strong> {selectedProperty.details?.bedrooms}
-                    </div>
-                    <div className="detail-item">
-                      <strong>Bathrooms:</strong> {selectedProperty.details?.bathrooms}
-                    </div>
-                    <div className="detail-item">
-                      <strong>Area:</strong> {selectedProperty.details?.area} sq ft
-                    </div>
-                    <div className="detail-item">
-                      <strong>Year Built:</strong> {selectedProperty.details?.yearBuilt}
-                    </div>
-                    <div className="detail-item">
-                      <strong>Parking:</strong> {selectedProperty.details?.parking ? 'Yes' : 'No'}
-                    </div>
-                  </div>
-                  
-                  <div className="address-section">
-                    <h4>Location</h4>
-                    <p>
-                      {selectedProperty.location?.address?.street}, {selectedProperty.location?.address?.city}, {selectedProperty.location?.address?.state} {selectedProperty.location?.address?.zipCode}
-                    </p>
-                  </div>
-                  
-                  <div className="description-section">
-                    <h4>Description</h4>
-                    <p>{selectedProperty.description}</p>
-                  </div>
-                  
-                  <div className="amenities-section">
-                    <h4>Amenities</h4>
-                    <div className="amenities-list">
-                      {selectedProperty.amenities?.map((amenity, index) => (
-                        <span key={index} className="amenity-tag">{amenity}</span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
-  );
 };
 
 export default UserDashboard;

@@ -22,7 +22,7 @@ const AdminProfileSettings = () => {
   const fetchAdminProfile = async () => {
     try {
       const adminToken = localStorage.getItem('adminToken');
-      const response = await axios.get('http://localhost:5001/api/admin/profile', {
+      const response = await axios.get('/api/admin/profile', {
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
 
@@ -71,7 +71,7 @@ const AdminProfileSettings = () => {
         updateData.newPassword = formData.newPassword;
       }
 
-      const response = await axios.put('http://localhost:5001/api/admin/profile', updateData, {
+      const response = await axios.put('/api/admin/profile', updateData, {
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
 
@@ -193,4 +193,4 @@ const AdminProfileSettings = () => {
   );
 };
 
-export default AdminProfileSettings; 
+export default AdminProfileSettings;

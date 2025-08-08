@@ -12,7 +12,8 @@ import {
   uploadPropertyImages,
   getPropertyRequests,
   handlePropertyRequest,
-  getOwnerProperty
+  getOwnerProperty,
+  requestPropertyUpdateApproval
 } from '../controllers/ownerController.js';
 import { ownerAuth } from '../middleware/authMiddleware.js';
 
@@ -29,6 +30,7 @@ router.get('/properties/:propertyId', getOwnerProperty);
 router.get('/properties', getOwnerProperties);
 router.post('/properties', createProperty);
 router.put('/properties/:propertyId', updateProperty);
+router.post('/properties/:propertyId/request-update', requestPropertyUpdateApproval);
 router.delete('/properties/:propertyId', deleteProperty);
 router.get('/profile', getOwnerProfile);
 router.put('/profile', updateOwnerProfile);

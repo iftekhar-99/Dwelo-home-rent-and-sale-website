@@ -1,0 +1,1 @@
+.messages-page{display:flex;height:calc(100vh - 40px);background:#1a1a1a;color:#fff}.messages-sidebar{width:360px;border-right:1px solid #333;overflow:auto}.messages-content{flex:1;display:flex;align-items:center;justify-content:center}.messages-empty{color:#888}

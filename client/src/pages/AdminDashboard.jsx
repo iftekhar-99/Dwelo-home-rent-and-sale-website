@@ -6,10 +6,12 @@ import './AdminDashboard.css';
 const AdminDashboard = () => {
   const [metrics, setMetrics] = useState(null);
   const [pendingProperties, setPendingProperties] = useState([]);
+  const [pendingUpdateRequests, setPendingUpdateRequests] = useState([]);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [pendingReports, setPendingReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [propertyTab, setPropertyTab] = useState('new');
   const [admin, setAdmin] = useState(null);
   const navigate = useNavigate();
 
@@ -33,15 +35,20 @@ const AdminDashboard = () => {
       const headers = { Authorization: `Bearer ${token}` };
 
       // Fetch dashboard metrics
-      const metricsResponse = await axios.get('http://localhost:5001/api/admin/dashboard', { headers });
+      const metricsResponse = await axios.get('/api/admin/dashboard', { headers });
       setMetrics(metricsResponse.data.data);
 
       // Fetch pending properties
-      const propertiesResponse = await axios.get('http://localhost:5001/api/admin/properties/pending', { headers });
+      // Fetch pending properties (new listings)
+      const propertiesResponse = await axios.get('/api/admin/properties/pending', { headers });
       setPendingProperties(propertiesResponse.data.data.properties);
 
+      // Fetch pending property update requests
+      const updateRequestsResponse = await axios.get('/api/admin/requests/property-update/pending', { headers });
+      setPendingUpdateRequests(updateRequestsResponse.data.data.requests);
+
       // Fetch pending reports
-      const reportsResponse = await axios.get('http://localhost:5001/api/admin/reports/pending', { headers });
+      const reportsResponse = await axios.get('/api/admin/reports/pending', { headers });
       setPendingReports(reportsResponse.data.data.reports);
 
     } catch (error) {
@@ -67,7 +74,7 @@ const AdminDashboard = () => {
       const token = localStorage.getItem('adminToken');
       const headers = { Authorization: `Bearer ${token}` };
 
-      await axios.put(`http://localhost:5001/api/admin/properties/${propertyId}/approve`, {
+      await axios.put(`/api/admin/properties/${propertyId}/approve`, {
         action,
         reason
       }, { headers });
@@ -81,8 +88,29 @@ const AdminDashboard = () => {
     }
   };
 
-  const viewPropertyDetails = (property) => {
-    setSelectedProperty(property);
+  const handlePropertyUpdateAction = async (requestId, action, propertyId, updatedData, reason = '') => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const headers = { Authorization: `Bearer ${token}` };
+
+      await axios.put(`/api/admin/requests/${requestId}/handle-property-update`, {
+        action,
+        propertyId,
+        updatedData: action === 'approve' ? updatedData : null, // Only send updatedData if approving
+        reason: action === 'reject' ? reason : null // Only send reason if rejecting
+      }, { headers });
+
+      // Refresh data
+      fetchDashboardData();
+      // Close modal if open
+      setSelectedProperty(null);
+    } catch (error) {
+      console.error('Error handling property update action:', error);
+    }
+  };
+
+  const viewPropertyDetails = (property, isUpdateRequest = false) => {
+    setSelectedProperty({ ...property, isUpdateRequest });
   };
 
   const closePropertyDetails = () => {
@@ -94,7 +122,7 @@ const AdminDashboard = () => {
       const token = localStorage.getItem('adminToken');
       const headers = { Authorization: `Bearer ${token}` };
 
-      await axios.put(`http://localhost:5001/api/admin/reports/${reportId}/handle`, {
+      await axios.put(`/api/admin/reports/${reportId}/handle`, {
         action,
         details
       }, { headers });
@@ -141,13 +169,13 @@ const AdminDashboard = () => {
             className={`nav-btn ${activeTab === 'properties' ? 'active' : ''}`}
             onClick={() => setActiveTab('properties')}
           >
-            Property Approval ({pendingProperties.length})
+            Property Requests ({pendingProperties.length + pendingUpdateRequests.length})
           </button>
           <button 
             className={`nav-btn ${activeTab === 'reports' ? 'active' : ''}`}
             onClick={() => setActiveTab('reports')}
           >
-            Review Report ({pendingReports.length})
+            Review Reports ({pendingReports.length})
           </button>
           <button 
             className={`nav-btn ${activeTab === 'profile' ? 'active' : ''}`}
@@ -210,70 +238,151 @@ const AdminDashboard = () => {
 
         {activeTab === 'properties' && (
           <div className="properties-content">
-            <h2>Pending Properties</h2>
+            <h2>Property Approval Requests</h2>
             
-            {pendingProperties.length === 0 ? (
-              <p>No pending properties to review.</p>
-            ) : (
-              <div className="properties-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Title</th>
-                      <th>Owner</th>
-                      <th>Type</th>
-                      <th>Price</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pendingProperties.map(property => (
-                      <tr key={property._id}>
-                        <td>{property.title}</td>
-                        <td>{property.ownerId?.name}</td>
-                        <td>{property.propertyType}</td>
-                        <td>${property.price?.toLocaleString()}</td>
-                        <td>
-                          <span className={`status ${property.status}`}>
-                            {property.status}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="action-buttons">
-                            <button 
-                              onClick={() => viewPropertyDetails(property)}
-                              className="btn-view"
-                            >
-                              View Details
-                            </button>
-                            <button 
-                              onClick={() => handlePropertyAction(property._id, 'approve')}
-                              className="btn-approve"
-                            >
-                              Approve
-                            </button>
-                            <button 
+            <div className="tab-container">
+              <div className="tab-buttons">
+                <button 
+                  className={`tab-btn ${propertyTab === 'new' ? 'active' : ''}`}
+                  onClick={() => setPropertyTab('new')}
+                >
+                  New Properties ({pendingProperties.length})
+                </button>
+                <button 
+                  className={`tab-btn ${propertyTab === 'updates' ? 'active' : ''}`}
+                  onClick={() => setPropertyTab('updates')}
+                >
+                  Update Requests ({pendingUpdateRequests.length})
+                </button>
+              </div>
+              
+              {propertyTab === 'new' && (
+                <div className="tab-content">
+                  {pendingProperties.length === 0 ? (
+                    <p>No pending properties to review.</p>
+                  ) : (
+                    <div className="properties-table">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Title</th>
+                            <th>Owner</th>
+                            <th>Type</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pendingProperties.map(property => (
+                            <tr key={property._id}>
+                              <td>{property.title}</td>
+                              <td>{property.ownerId?.name}</td>
+                              <td>{property.propertyType}</td>
+                              <td>${property.price?.toLocaleString()}</td>
+                              <td>
+                                <span className={`status ${property.status}`}>
+                                  {property.status}
+                                </span>
+                              </td>
+                              <td>
+                                <div className="action-buttons">
+                                  <button 
+                                    onClick={() => viewPropertyDetails(property)}
+                                    className="btn-view"
+                                  >
+                                    View Details
+                                  </button>
+                                  <button 
+                                    onClick={() => handlePropertyAction(property._id, 'approve')}
+                                    className="btn-approve"
+                                  >
+                                    Approve
+                                  </button>
+                                  <button 
+              
                               onClick={() => {
-                                const reason = prompt('Enter rejection reason:');
-                                if (reason) {
-                                  handlePropertyAction(property._id, 'reject', reason);
-                                }
-                              }}
-                              className="btn-reject"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                                  const reason = prompt('Enter rejection reason:');
+                                  if (reason) {
+                                    handlePropertyAction(property._id, 'reject', reason);
+                                  }
+                                }}
+                                className="btn-reject"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            
+            {propertyTab === 'updates' && (
+              <div className="tab-content">
+                {pendingUpdateRequests.length === 0 ? (
+                  <p>No pending property update requests to review.</p>
+                ) : (
+                  <div className="properties-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Property Title</th>
+                          <th>Owner</th>
+                          <th>Requested Changes</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pendingUpdateRequests.map(request => (
+                          <tr key={request._id}>
+                            <td>{request.propertyId?.title}</td>
+                            <td>{request.ownerId?.name}</td>
+                            <td>
+                              <button 
+                                onClick={() => viewPropertyDetails(request.proposedUpdates, true)}
+                                className="btn-view"
+                              >
+                                View Proposed Changes
+                              </button>
+                            </td>
+                            <td>
+                              <div className="action-buttons">
+                                <button 
+                                  onClick={() => handlePropertyUpdateAction(request._id, 'approve', request.propertyId._id, request.proposedUpdates)}
+                                  className="btn-approve"
+                                >
+                                  Approve Update
+                                </button>
+                                <button 
+                                  onClick={() => {
+                                    const reason = prompt('Enter rejection reason:');
+                                    if (reason) {
+                                      handlePropertyUpdateAction(request._id, 'reject', request.propertyId._id, null, reason);
+                                    }
+                                  }}
+                                  className="btn-reject"
+                                >
+                                  Reject Update
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
+            )}
+          </div>
+        </div>
+      )}
 
         {activeTab === 'reports' && (
           <div className="reports-content">
@@ -360,13 +469,22 @@ const AdminDashboard = () => {
         <div className="modal-overlay">
           <div className="property-modal">
             <div className="modal-header">
-              <h2>Property Details</h2>
+              <h2>{selectedProperty.isUpdateRequest ? 'Property Update Request Details' : 'Property Details'}</h2>
               <button onClick={closePropertyDetails} className="close-btn">&times;</button>
             </div>
             <div className="modal-content">
+              {selectedProperty.isUpdateRequest && (
+                <div className="update-request-details">
+                  <h3>Proposed Updates</h3>
+                  {/* Render proposed updates here, comparing with original if available */}
+                  <p>Displaying proposed changes for property ID: {selectedProperty._id}</p>
+                  {/* You'll need to fetch the original property details here to compare */}
+                </div>
+              )}
+
               <div className="property-image-large">
                 {selectedProperty.images && selectedProperty.images.length > 0 ? (
-                  <img src={`http://localhost:5001/${selectedProperty.images[0]}`} alt={selectedProperty.title} />
+                  <img src={`http://localhost:5002/${selectedProperty.images[0]}`} alt={selectedProperty.title} />
                 ) : (
                   <div className="placeholder-image-large">No Image Available</div>
                 )}
@@ -429,23 +547,47 @@ const AdminDashboard = () => {
                 </div>
                 
                 <div className="action-buttons modal-actions">
-                  <button 
-                    onClick={() => handlePropertyAction(selectedProperty._id, 'approve')}
-                    className="btn-approve"
-                  >
-                    Approve Property
-                  </button>
-                  <button 
-                    onClick={() => {
-                      const reason = prompt('Enter rejection reason:');
-                      if (reason) {
-                        handlePropertyAction(selectedProperty._id, 'reject', reason);
-                      }
-                    }}
-                    className="btn-reject"
-                  >
-                    Reject Property
-                  </button>
+                  {selectedProperty.isUpdateRequest ? (
+                    <>
+                      <button 
+                        onClick={() => handlePropertyUpdateAction(selectedProperty._id, 'approve', selectedProperty.propertyId._id, selectedProperty.proposedUpdates)}
+                        className="btn-approve"
+                      >
+                        Approve Update
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const reason = prompt('Enter rejection reason:');
+                          if (reason) {
+                            handlePropertyUpdateAction(selectedProperty._id, 'reject', selectedProperty.propertyId._id, null, reason);
+                          }
+                        }}
+                        className="btn-reject"
+                      >
+                        Reject Update
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button 
+                        onClick={() => handlePropertyAction(selectedProperty._id, 'approve')}
+                        className="btn-approve"
+                      >
+                        Approve Property
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const reason = prompt('Enter rejection reason:');
+                          if (reason) {
+                            handlePropertyAction(selectedProperty._id, 'reject', reason);
+                          }
+                        }}
+                        className="btn-reject"
+                      >
+                        Reject Property
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

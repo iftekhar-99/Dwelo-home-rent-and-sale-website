@@ -1,6 +1,7 @@
 /* Owner Login Styles */
 .owner-login {
   min-height: 100vh;
+  width: 100%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
@@ -9,6 +10,7 @@
   padding: 2rem;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
 }
 
 .login-container {
@@ -19,10 +21,11 @@
   padding: 2.5rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  max-width: 400px;
+  max-width: 500px;
   width: 100%;
   will-change: transform;
   transform: translateZ(0);
+  box-sizing: border-box;
 }
 
 /* Fix input autofill styling */

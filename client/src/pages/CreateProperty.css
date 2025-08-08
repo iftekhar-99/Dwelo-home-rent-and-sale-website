@@ -1,11 +1,14 @@
 .create-property {
   min-height: 100vh;
+  width: 100%;
   background: #f8fafc;
   padding: 2rem;
+  box-sizing: border-box;
 }
 
 .property-form-container {
-  max-width: 800px;
+  width: 100%;
+  max-width: 1000px;
   margin: 0 auto;
   background: white;
   border-radius: 12px;

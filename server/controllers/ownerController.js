@@ -4,8 +4,10 @@ import User from '../models/User.js';
 import Owner from '../models/Owner.js';
 import Property from '../models/Property.js';
 import Request from '../models/Request.js';
+import PropertyUpdateRequest from '../models/PropertyUpdateRequest.js';
 import Activity from '../models/Activity.js';
 import Notification from '../models/Notification.js';
+// import bcrypt from 'bcryptjs'; // Removed duplicate import
 
 // JWT token generation for owner
 const generateOwnerToken = (ownerId, userId) => {
@@ -453,25 +455,58 @@ export const deleteProperty = async (req, res) => {
 
     const property = await Property.findOne({ _id: propertyId, ownerId });
     if (!property) {
-      return res.status(404).json({
-        success: false,
-        message: 'Property not found'
-      });
+      return res.status(404).json({ success: false, message: 'Property not found' });
     }
 
     await Property.findByIdAndDelete(propertyId);
 
-    res.json({
-      success: true,
-      message: 'Property deleted successfully'
-    });
+    res.json({ success: true, message: 'Property deleted successfully' });
 
   } catch (error) {
     console.error('Delete property error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete property'
+    res.status(500).json({ success: false, message: 'Failed to delete property' });
+  }
+};
+
+// Request property update approval
+export const requestPropertyUpdateApproval = async (req, res) => {
+  try {
+    const { propertyId } = req.params;
+    const ownerId = req.owner.ownerId;
+    const updatedData = req.body;
+
+    const property = await Property.findOne({ _id: propertyId, ownerId });
+
+    if (!property) {
+      return res.status(404).json({ success: false, message: 'Property not found or not owned by you' });
+    }
+
+    // Create a new request for property update approval
+    const newRequest = new PropertyUpdateRequest({
+      propertyId: property._id,
+      ownerId: ownerId,
+      status: 'pending',
+      proposedUpdates: updatedData // Store the proposed updates
     });
+
+    await newRequest.save();
+
+    // Notify admin (optional, can be done via a separate notification system)
+    const adminNotification = new Notification({
+      userId: null, // Or a specific admin user ID
+      message: `Property update request for '${property.title}' by ${req.user && req.user.name ? req.user.name : 'An owner'} is pending approval.`,
+      type: 'admin_action',
+      entityType: 'property_update_request',
+      entityId: newRequest._id,
+      read: false
+    });
+    await adminNotification.save();
+
+    res.status(200).json({ success: true, message: 'Property update request sent for approval', requestId: newRequest._id });
+  } catch (error) {
+    console.error('Error requesting property update approval:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ success: false, message: 'Failed to send property update request', error: errorMessage });
   }
 };
 

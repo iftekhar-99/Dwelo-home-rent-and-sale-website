@@ -60,7 +60,7 @@ const EditProperty = () => {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        const property = data.data.property;
+       const property = data.data.property;
         
         // Set original images for reference
         if (property.images && Array.isArray(property.images)) {
@@ -73,12 +73,12 @@ const EditProperty = () => {
         }
 
         // Populate form data
-        setFormData({
+         setFormData({
           title: property.title || '',
           description: property.description || '',
           propertyType: property.propertyType || '',
           listingType: property.listingType || '',
-          price: property.price || '',
+           price: String(property.price ?? ''),
           address: property.location?.address?.street || '',
           city: property.location?.address?.city || '',
           state: property.location?.address?.state || '',
@@ -112,10 +112,7 @@ const EditProperty = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
     
     // Clear error when user starts typing
     if (errors[name]) {
@@ -155,10 +152,8 @@ const EditProperty = () => {
       return;
     }
 
-    // Set the single image
+    // Set the single image (only local preview; no backend update yet)
     setImages([file]);
-
-    // Create and set preview URL for the image
     setPreviewImages([URL.createObjectURL(file)]);
   };
 
@@ -248,7 +243,7 @@ const EditProperty = () => {
         description: formData.description,
         propertyType: formData.propertyType,
         listingType: formData.listingType,
-        price: parseFloat(formData.price),
+        price: Number(formData.price),
         location: {
           address: {
             street: formData.address,
@@ -270,29 +265,30 @@ const EditProperty = () => {
         images: imageUrls
       };
 
-      const propertyResponse = await fetch(`/api/owner/properties/${id}/request-update`, {
-        method: 'POST',
+      const updateUrl = `/api/owner/properties/${id}`;
+      console.log('[EditProperty] Submitting update to', updateUrl, 'payload:', propertyData);
+      const propertyResponse = await fetch(updateUrl, {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
+          , 'X-Update-Intent': 'owner-edit-submit'
         },
         body: JSON.stringify(propertyData)
       });
 
-      let propertyResult;
-      try {
-        propertyResult = await propertyResponse.json();
-      } catch (jsonError) {
-        // If JSON parsing fails, it means the response was not valid JSON (e.g., empty or plain text)
-        console.error('Failed to parse JSON response:', jsonError);
-        throw new Error('Server returned an unexpected response format.');
-      }
+      // Read raw response for robust diagnostics
+      const status = propertyResponse.status;
+      const rawText = await propertyResponse.text();
+      let propertyResult = null;
+      try { propertyResult = JSON.parse(rawText); } catch (e) { /* non-JSON */ }
+      console.log('[EditProperty] Update response', status, propertyResult || rawText);
 
-      if (!propertyResponse.ok) {
-        throw new Error(propertyResult.message || 'Failed to request property update');
+      if (!propertyResponse.ok || !(propertyResult && propertyResult.success)) {
+        const msg = propertyResult?.message || `Update failed (status ${status})`;
+        throw new Error(msg);
       }
-
-      alert('Property update request sent for approval!');
+      alert('Property updated successfully');
       navigate(`/owner/property/${id}`);
       
     } catch (error) {
@@ -563,7 +559,7 @@ const EditProperty = () => {
         </button>
       </div>
       
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={(e) => e.preventDefault()}>
         <div className="property-form-container">
           <div className="form-header">
             <h2>Edit Property</h2>
@@ -594,7 +590,7 @@ const EditProperty = () => {
                 Next
               </button>
             ) : (
-              <button type="submit" disabled={isSubmitting} className="btn-primary">
+              <button type="button" onClick={handleSubmit} disabled={isSubmitting} className="btn-primary">
                 {isSubmitting ? 'Updating Property...' : 'Update Property'}
               </button>
             )}

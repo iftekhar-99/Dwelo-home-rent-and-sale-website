@@ -13,7 +13,7 @@ const propertyRequestSchema = new mongoose.Schema({
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Owner',
     required: true
   },
   requestType: {

@@ -43,6 +43,7 @@ export const authenticateToken = async (req, res, next) => {
       name: user.name
     };
     console.log('req.user populated:', req.user);
+    console.log('User ID type:', typeof user._id, 'Value:', user._id.toString());
     next();
   } catch (error) {
     console.error('Token verification error:', error);

@@ -336,10 +336,16 @@ export const getPendingPropertyUpdateRequests = async (req, res) => {
 
     const total = await PropertyUpdateRequest.countDocuments({ status });
 
+    // Also include newly created properties waiting for approval so both are visible in one place
+    const pendingNewProperties = await Property.find({ status: 'pending' })
+      .populate('ownerId', 'name email phone')
+      .select('title price images status createdAt');
+
     res.json({
       success: true,
       data: {
         requests,
+        pendingNewProperties,
         pagination: {
           current: parseInt(page),
           total: Math.ceil(total / limit),
@@ -393,8 +399,17 @@ export const handlePropertyUpdateRequest = async (req, res) => {
         });
       }
 
+      // Normalize proposed updates before applying (e.g., images array of strings → array of objects)
+      const updates = { ...request.proposedUpdates };
+      if (Array.isArray(updates.images)) {
+        updates.images = updates.images.map(img =>
+          typeof img === 'string' ? { url: img, isPrimary: false } : img
+        );
+        if (updates.images.length > 0) updates.images[0].isPrimary = true;
+      }
+
       // Merge proposed updates into the property document
-      Object.assign(property, request.proposedUpdates);
+      Object.assign(property, updates);
       await property.save();
 
       request.status = 'approved';

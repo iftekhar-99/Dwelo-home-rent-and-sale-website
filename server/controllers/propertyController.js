@@ -174,6 +174,10 @@ export const getAllProperties = async (req, res) => {
       query.amenities = { $all: amenitiesList };
     }
 
+    // Public search should exclude sold/rented/inactive
+    query.isActive = true;
+    query.status = { $nin: ['sold', 'rented', 'inactive', 'pending'] };
+
     const properties = await Property.find(query)
       .populate('ownerId', 'name email')
       .sort({ createdAt: -1 });
@@ -237,9 +241,21 @@ export const updateProperty = async (req, res) => {
       });
     }
 
-    // Update property fields
-    Object.assign(property, req.body);
-    await property.save();
+    // Update property fields (explicit set) and normalize images
+    const updates = { ...req.body };
+    if (updates.price !== undefined) updates.price = Number(updates.price);
+    if (updates.details) {
+      const det = updates.details;
+      if (det.bedrooms !== undefined) det.bedrooms = Number(det.bedrooms);
+      if (det.bathrooms !== undefined) det.bathrooms = Number(det.bathrooms);
+      if (det.area && det.area.size !== undefined) det.area.size = Number(det.area.size);
+    }
+    if (Array.isArray(updates.images)) {
+      updates.images = updates.images.map((img, idx) => (
+        typeof img === 'string' ? { url: img, isPrimary: idx === 0 } : { ...img, isPrimary: idx === 0 }
+      ));
+    }
+    await Property.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true });
 
     res.json({
       success: true,

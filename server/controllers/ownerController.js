@@ -405,45 +405,58 @@ export const updateProperty = async (req, res) => {
   try {
     const ownerId = req.owner.ownerId;
     const { propertyId } = req.params;
-    const updateData = req.body;
+    const updateData = req.body || {};
+
+    // Require an explicit intent header to avoid accidental updates from stray requests
+    const updateIntent = (req.headers['x-update-intent'] || '').toString();
+    const allowedIntents = ['owner-edit-submit', 'owner-status-update'];
+    if (!allowedIntents.includes(updateIntent)) {
+      return res.status(400).json({ success: false, message: 'Invalid update intent' });
+    }
 
     const property = await Property.findOne({ _id: propertyId, ownerId });
     if (!property) {
-      return res.status(404).json({
-        success: false,
-        message: 'Property not found'
+      return res.status(404).json({ success: false, message: 'Property not found' });
+    }
+
+    // Normalize updates
+    const updates = { ...updateData };
+    // Coerce numeric fields
+    if (updates.price !== undefined) {
+      updates.price = Number(updates.price);
+    }
+    if (updates.details) {
+      const det = updates.details;
+      if (det.bedrooms !== undefined) det.bedrooms = Number(det.bedrooms);
+      if (det.bathrooms !== undefined) det.bathrooms = Number(det.bathrooms);
+      if (det.area && det.area.size !== undefined) det.area.size = Number(det.area.size);
+    }
+
+    // Normalize images: accept array of URLs or array of objects
+    if (Array.isArray(updates.images)) {
+      updates.images = updates.images.map((img, idx) => {
+        if (typeof img === 'string') return { url: img, isPrimary: idx === 0 };
+        return { ...img, isPrimary: idx === 0 ? true : !!img.isPrimary };
       });
     }
 
-    if (property.status === 'approved') {
-      return res.status(400).json({
-        success: false,
-        message: 'Cannot update approved property'
-      });
+    // Status to isActive coupling
+    if (typeof updates.status === 'string') {
+      if (['sold', 'rented', 'inactive'].includes(updates.status)) updates.isActive = false;
+      if (['approved', 'available'].includes(updates.status)) updates.isActive = true;
     }
 
-    if (updateData.price || updateData.description || updateData.images) {
-      updateData.status = 'pending';
-    }
-
-    const updatedProperty = await Property.findByIdAndUpdate(
-      propertyId,
-      updateData,
+    console.log('Owner update intent:', updateIntent, 'ownerId:', ownerId.toString(), 'propertyId:', propertyId.toString(), 'updates:', JSON.stringify(updates));
+    const updated = await Property.findOneAndUpdate(
+      { _id: propertyId, ownerId },
+      { $set: updates },
       { new: true, runValidators: true }
     );
-
-    res.json({
-      success: true,
-      message: 'Property updated successfully',
-      data: { property: updatedProperty }
-    });
-
+    console.log('Updated property result price:', updated?.price);
+    return res.json({ success: true, message: 'Property updated successfully', data: { property: updated, applied: updates } });
   } catch (error) {
     console.error('Update property error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update property'
-    });
+    res.status(500).json({ success: false, message: 'Failed to update property' });
   }
 };
 

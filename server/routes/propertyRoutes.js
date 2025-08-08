@@ -20,7 +20,8 @@ router.use(ownerAuth);
 
 // Apply upload middleware to create property route
 router.post('/', propertyUploadMiddleware, createProperty);
-router.put('/:id', propertyUploadMiddleware, updateProperty);
+// Do not require image upload for updates; allow metadata-only updates
+router.put('/:id', updateProperty);
 router.delete('/:id', deleteProperty);
 
 export default router;

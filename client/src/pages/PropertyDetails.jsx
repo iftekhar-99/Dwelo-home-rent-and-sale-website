@@ -22,10 +22,12 @@ const PropertyDetails = () => {
         return;
       }
 
-      const response = await fetch(`/api/properties/${id}`, {
+      const response = await fetch(`/api/properties/${id}?t=${Date.now()}`, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache'
+        },
+        cache: 'no-store'
       });
 
       const data = await response.json();
@@ -128,7 +130,7 @@ const PropertyDetails = () => {
 
   // Check if current user is the property owner
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-  const isOwner = property.ownerId === currentUser._id;
+  const isOwner = (property?.ownerId?._id || property?.ownerId) === currentUser._id;
 
   return (
     <div className="property-details">
@@ -179,7 +181,7 @@ const PropertyDetails = () => {
           </div>
 
           <div className="property-price">
-            <h2>${property.price?.toLocaleString() || '0'}</h2>
+            <h2>${Number(property.price ?? 0).toLocaleString()}</h2>
             <span className="listing-type">{property.listingType === 'sale' ? 'For Sale' : 'For Rent'}</span>
           </div>
 

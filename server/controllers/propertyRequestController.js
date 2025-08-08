@@ -94,8 +94,14 @@ export const createPropertyRequest = async (req, res) => {
 export const getOwnerRequests = async (req, res) => {
   try {
     const ownerId = req.user.id || req.user.userId;
+    console.log('getOwnerRequests - ownerId:', ownerId, 'type:', typeof ownerId);
     
-    const requests = await PropertyRequest.findRequestsByOwner(ownerId);
+    // Convert to string for consistent comparison
+    const ownerIdString = ownerId.toString();
+    console.log('getOwnerRequests - ownerIdString:', ownerIdString);
+    
+    const requests = await PropertyRequest.findRequestsByOwner(ownerIdString);
+    console.log('getOwnerRequests - found requests:', requests.length);
     
     res.status(200).json({
       success: true,
@@ -151,7 +157,7 @@ export const getRequestById = async (req, res) => {
     }
     
     // Check if user is the owner or requester
-    if (request.owner.toString() !== userId && request.requester._id.toString() !== userId) {
+    if (request.owner.toString() !== userId.toString() && request.requester._id.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,
         message: 'You are not authorized to view this request'
@@ -177,7 +183,7 @@ export const updateRequestStatus = async (req, res) => {
   try {
     const { requestId } = req.params;
     const { status, responseMessage } = req.body;
-    const userId = req.user.id;
+    const userId = req.user.id || req.user.userId;
     
     if (!status || !['accepted', 'rejected'].includes(status)) {
       return res.status(400).json({
@@ -198,7 +204,16 @@ export const updateRequestStatus = async (req, res) => {
     }
     
     // Check if user is the owner
-    if (request.owner.toString() !== userId) {
+    console.log('Authorization check:', {
+      requestOwner: request.owner.toString(),
+      userId: userId,
+      requestOwnerType: typeof request.owner,
+      userIdType: typeof userId,
+      match: request.owner.toString() === userId.toString()
+    });
+    
+    const ownerDoc = await Owner.findOne({ userId: userId });
+    if (!ownerDoc || request.owner.toString() !== ownerDoc._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'You are not authorized to update this request'
@@ -257,7 +272,7 @@ export const cancelPropertyRequest = async (req, res) => {
     }
     
     // Check if user is the requester
-    if (request.requester.toString() !== userId) {
+    if (request.requester.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,
         message: 'You are not authorized to cancel this request'

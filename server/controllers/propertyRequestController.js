@@ -32,7 +32,7 @@ export const createPropertyRequest = async (req, res) => {
     if (!propertyOwnerId) {
       // property.ownerId is an Owner document id. Resolve to the underlying User id
       const ownerDoc = await Owner.findById(property.ownerId);
-      propertyOwnerId = ownerDoc?.userId;
+      propertyOwnerId = ownerDoc?._id;
     }
     
     // Validate owner exists

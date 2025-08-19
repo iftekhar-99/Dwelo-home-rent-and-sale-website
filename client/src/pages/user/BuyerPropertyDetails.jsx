@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaEye, FaHeart, FaEnvelope, FaPhone, FaBookmark, FaRegBookmark, FaComments, FaHandshake } from 'react-icons/fa';
 import { ChatInterface } from "../../components/chat";
-import '../../common/PropertyDetails.css';
+import '../common/PropertyDetails.css';
 
 const BuyerPropertyDetails = () => {
   const { id } = useParams();

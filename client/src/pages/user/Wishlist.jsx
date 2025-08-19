@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaHome, FaList, FaHeart, FaUser, FaSignOutAlt, FaEnvelope, FaTrash } from 'react-icons/fa';
-import { ChatButton } from '../components/chat';
+import { ChatButton } from "../../components/chat";
 import './Wishlist.css';
 
 const Wishlist = () => {

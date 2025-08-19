@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { ChatButton } from '../components/chat';
+import { ChatButton } from '../../components/chat';
 import { FaHome, FaList, FaHeart, FaUser, FaSignOutAlt, FaEnvelope } from 'react-icons/fa';
 import './UserDashboard.css';
 

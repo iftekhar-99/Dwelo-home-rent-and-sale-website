@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import './OwnerDashboard.css';
 import { FaHome, FaList, FaBell, FaUser, FaSignOutAlt, FaEnvelope } from 'react-icons/fa';
 import { BsFillHouseDoorFill, BsGraphUp } from 'react-icons/bs';
-import { ChatButton } from '../components/chat';
+import { ChatButton } from "../../components/chat";
 
 const OwnerDashboard = () => {
   const [stats, setStats] = useState({

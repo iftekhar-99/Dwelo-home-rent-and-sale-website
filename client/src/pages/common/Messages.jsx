@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import ChatList from '../components/chat/ChatList';
-import UserChat from '../components/chat/UserChat';
+import { ChatList, UserChat } from '../../components/chat';
 import './Messages.css';
 
 const useQuery = () => new URLSearchParams(useLocation().search);

@@ -72,12 +72,16 @@ const Login = () => {
         
         // Redirect based on user role
         const userRole = response.data.data.user.role;
-        let redirectPath = '/buyer/userdashboard';
+        let redirectPath = '/'; // Default to home or a common landing if no specific role match
         
         if (userRole === 'admin') {
           redirectPath = '/admin/dashboard';
         } else if (userRole === 'owner') {
           redirectPath = '/owner/dashboard';
+        } else if (userRole === 'buyer') {
+          redirectPath = '/buyer/dashboard';
+        } else if (userRole === 'renter') {
+          redirectPath = '/renter/dashboard';
         }
         
         setTimeout(() => {

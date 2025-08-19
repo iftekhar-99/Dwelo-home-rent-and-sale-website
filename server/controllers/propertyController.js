@@ -125,8 +125,9 @@ export const getAllProperties = async (req, res) => {
       city,
       state,
       zipCode,
-      minYearBuilt,
-      maxYearBuilt,
+      propertyType,
+      minArea,
+      maxArea,
       amenities
     } = req.query;
 
@@ -162,10 +163,14 @@ export const getAllProperties = async (req, res) => {
       query['location.address.zipCode'] = zipCode;
     }
 
-    if (minYearBuilt || maxYearBuilt) {
-      query['details.yearBuilt'] = {};
-      if (minYearBuilt) query['details.yearBuilt'].$gte = Number(minYearBuilt);
-      if (maxYearBuilt) query['details.yearBuilt'].$lte = Number(maxYearBuilt);
+    if (propertyType) {
+      query.propertyType = propertyType;
+    }
+
+    if (minArea || maxArea) {
+      query['details.area.size'] = {};
+      if (minArea) query['details.area.size'].$gte = Number(minArea);
+      if (maxArea) query['details.area.size'].$lte = Number(maxArea);
     }
 
     // Handle amenities filter (expects comma-separated string)
@@ -174,9 +179,8 @@ export const getAllProperties = async (req, res) => {
       query.amenities = { $all: amenitiesList };
     }
 
-    // Public search should exclude sold/rented/inactive
     query.isActive = true;
-    query.status = { $nin: ['sold', 'rented', 'inactive', 'pending'] };
+    query.status = 'approved';
 
     const properties = await Property.find(query)
       .populate('ownerId', 'name email')

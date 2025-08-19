@@ -13,11 +13,8 @@ const Wishlist = () => {
 
   // Define sidebar links based on user role
   const sidebarLinks = [
-    { icon: <FaHome />, text: 'Dashboard', path: user?.role === 'buyer' ? '/buyer/userdashboard' : '/renter/userdashboard' },
-    { icon: <FaList />, text: 'Properties', path: user?.role === 'buyer' ? '/buyer/userdashboard' : '/renter/userdashboard' },
+    {icon: <FaHome />, text: 'Dashboard', path: user?.role === 'buyer' ? '/buyer/dashboard' : '/renter/dashboard' },
     { icon: <FaHeart />, text: 'Wishlist', path: user?.role === 'buyer' ? '/buyer/wishlist' : '/renter/wishlist' },
-    { icon: <FaEnvelope />, text: 'Messages', path: user?.role === 'buyer' ? '/buyer/messages' : '/renter/messages' },
-    { icon: <FaUser />, text: 'Profile', path: user?.role === 'buyer' ? '/buyer/profile' : '/renter/profile' }
   ];
 
   useEffect(() => {

@@ -1,10 +1,99 @@
 .user-requests {
-  max-width: 1200px;
+  max-width: 1400px; /* Increased max-width for desktop view */
   margin: 0 auto;
-  padding: 20px;
+  padding: 30px; /* Increased padding */
   background: #1a1a1a;
   min-height: 100vh;
   color: #ffffff;
+}
+
+.requests-header h1 {
+  margin: 0;
+  font-size: 2.5rem; /* Larger heading */
+  font-weight: 600;
+}
+
+.requests-filters {
+  display: flex;
+  gap: 15px; /* Increased gap */
+  margin-bottom: 40px; /* Increased margin */
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 12px 25px; /* Larger buttons */
+  font-size: 16px; /* Larger font */
+}
+
+.requests-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); /* Multi-column grid */
+  gap: 30px; /* Increased gap between cards */
+}
+
+.request-card {
+  padding: 25px; /* Increased card padding */
+}
+
+.request-info h3 {
+  font-size: 1.4rem; /* Larger card title */
+}
+
+.request-meta {
+  font-size: 1rem; /* Larger meta font */
+}
+
+.request-type, .offer-amount, .move-in-date {
+  font-size: 1rem; /* Larger details font */
+}
+
+.request-message p,
+.owner-response p {
+  font-size: 1rem; /* Larger message font */
+}
+
+.modal-content {
+  padding: 30px; /* Increased modal padding */
+}
+
+.summary-item,
+.message-section p,
+.response-section p,
+.pending-notice p,
+.accepted-notice p,
+.rejected-notice p {
+  font-size: 1rem; /* Consistent font size in modal */
+}
+
+@media (max-width: 768px) {
+  .user-requests {
+    padding: 15px;
+  }
+
+  .requests-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .requests-header h1 {
+    font-size: 2rem;
+  }
+
+  .requests-filters {
+    justify-content: center;
+  }
+
+  .requests-list {
+    grid-template-columns: 1fr;
+  }
+
+  .request-card {
+    padding: 20px;
+  }
+
+  .modal-content {
+    padding: 20px;
+  }
 }
 
 .requests-header {

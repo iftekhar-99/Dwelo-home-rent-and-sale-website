@@ -16,7 +16,7 @@ const UserRequests = () => {
   useEffect(() => {
     fetchRequests();
   }, []);
-
+  
   const fetchRequests = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -88,7 +88,10 @@ const UserRequests = () => {
   return (
     <div className="user-requests">
       <div className="requests-header">
-        <button onClick={() => navigate('/dashboard')} className="back-btn">
+        <button onClick={() => {
+          const userRole = localStorage.getItem('role');
+          navigate(userRole === 'buyer' ? '/buyer/dashboard' : '/renter/dashboard');
+        }} className="back-btn">
           <FaArrowLeft /> Back to Dashboard
         </button>
         <h1>My Property Requests</h1>

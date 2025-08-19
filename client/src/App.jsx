@@ -26,6 +26,7 @@ import UserDashboard from "./pages/user/UserDashboard";
 import UserRequests from "./pages/user/UserRequests";
 import Wishlist from "./pages/user/Wishlist";
 import BuyerPropertyDetails from "./pages/user/BuyerPropertyDetails";
+import UserProfile from "./pages/user/UserProfile";
 
 import "./App.css";
 
@@ -61,12 +62,14 @@ function App() {
           <Route path="/buyer/requests" element={<UserRequests />} />
           <Route path="/buyer/wishlist" element={<Wishlist />} />
           <Route path="/buyer/property/:id" element={<BuyerPropertyDetails />} />
+          <Route path="/buyer/profile" element={<UserProfile />} />
 
           {/* Renter */}
           <Route path="/renter/dashboard" element={<UserDashboard />} />
           <Route path="/renter/requests" element={<UserRequests />} />
           <Route path="/renter/wishlist" element={<Wishlist />} />
           <Route path="/renter/property/:id" element={<BuyerPropertyDetails />} />
+          <Route path="/renter/profile" element={<UserProfile />} />
 
           {/* Catch-all: redirect to login */}
           <Route path="*" element={<Navigate to="/login" replace />} />

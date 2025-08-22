@@ -245,7 +245,30 @@ const BuyerPropertyDetails = () => {
   return (
     <div className="property-details">
       <div className="property-details-header">
-        <button onClick={() => navigate('/dashboard')} className="back-btn">
+        <button onClick={() => {
+          const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+          const userRole = currentUser?.role;
+          let dashboardRoute = '/dashboard';
+          
+          switch (userRole) {
+            case 'buyer':
+              dashboardRoute = '/buyer/dashboard';
+              break;
+            case 'renter':
+              dashboardRoute = '/renter/dashboard';
+              break;
+            case 'owner':
+              dashboardRoute = '/owner/dashboard';
+              break;
+            case 'admin':
+              dashboardRoute = '/admin/dashboard';
+              break;
+            default:
+              dashboardRoute = '/dashboard';
+          }
+          
+          navigate(dashboardRoute);
+        }} className="back-btn">
           <FaArrowLeft /> Back to Dashboard
         </button>
       </div>

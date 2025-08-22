@@ -19,6 +19,7 @@ const UserDashboard = () => {
     phone: '',
     preferences: {}
   });
+  const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     listingType: '',
     minPrice: '',
@@ -86,7 +87,7 @@ const UserDashboard = () => {
       
       if (response.data && response.data.data) {
         setProperties(response.data.data);
-        setFilteredProperties(response.data.data);
+        // Don't set filteredProperties here - let the search useEffect handle it
       } else {
         console.error('Invalid response format:', response.data);
         setProperties([]);
@@ -100,6 +101,36 @@ const UserDashboard = () => {
       setLoading(false);
     }
   };
+
+  // Filter properties based on search query
+  useEffect(() => {
+    if (!properties || properties.length === 0) {
+      setFilteredProperties([]);
+      return;
+    }
+    
+    if (!searchQuery.trim()) {
+      setFilteredProperties(properties);
+    } else {
+      const filtered = properties.filter(property => {
+        try {
+          const searchLower = searchQuery.toLowerCase();
+          return (
+            (property.title && property.title.toLowerCase().includes(searchLower)) ||
+            (property.description && property.description.toLowerCase().includes(searchLower)) ||
+            (property.location?.address && property.location.address.toLowerCase().includes(searchLower)) ||
+            (property.location?.city && property.location.city.toLowerCase().includes(searchLower)) ||
+            (property.location?.state && property.location.state.toLowerCase().includes(searchLower)) ||
+            (property.propertyType && property.propertyType.toLowerCase().includes(searchLower))
+          );
+        } catch (error) {
+          console.error('Error filtering property:', property, error);
+          return false;
+        }
+      });
+      setFilteredProperties(filtered);
+    }
+  }, [searchQuery, properties]);
   
   const viewPropertyDetails = (property) => {
     // Navigate to the dedicated property details page instead of showing modal
@@ -122,6 +153,7 @@ const UserDashboard = () => {
       maxArea: '',
     };
     setFilters(clearedFilters);
+    setSearchQuery('');
     fetchProperties(clearedFilters);
   };
 
@@ -227,6 +259,16 @@ const UserDashboard = () => {
             >
               {showFilters ? 'Hide Filters' : 'Show Filters'}
             </button>
+          </div>
+          
+          <div className="search-bar">
+            <input
+              type="text"
+              placeholder="Search properties by title, location, or description..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
           </div>
           
           {showFilters && (

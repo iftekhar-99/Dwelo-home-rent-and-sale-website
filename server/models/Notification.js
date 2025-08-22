@@ -14,6 +14,8 @@ const notificationSchema = new mongoose.Schema({
       'request_received',
       'request_approve',
       'request_reject',
+      'property_request',
+      'request_cancelled',
       'message_received',
       'system_alert',
       'payment_success',
@@ -108,4 +110,4 @@ notificationSchema.statics.createMultiple = function(notifications) {
 
 const Notification = mongoose.model('Notification', notificationSchema);
 
-export default Notification; 
+export default Notification;

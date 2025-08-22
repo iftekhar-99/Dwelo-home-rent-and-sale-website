@@ -1,8 +1,7 @@
 .property-details {
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100vw;
+  margin: 0;
+  padding: 1rem;
   background: #f8f9fa;
   min-height: 100vh;
   box-sizing: border-box;
@@ -73,9 +72,8 @@
 }
 
 .property-details-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  display: flex;
+  flex-direction: column;
   background: white;
   border-radius: 12px;
   overflow: hidden;
@@ -94,14 +92,15 @@
 .main-image {
   position: relative;
   width: 100%;
-  height: 500px;
+  height: 70vh;
   overflow: hidden;
 }
 
 .main-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: #f8f9fa;
 }
 
 .property-action-buttons {
@@ -228,6 +227,7 @@
 
 .property-info-section {
   padding: 2rem;
+  margin-top: 1.5rem;
 }
 
 .property-header {
@@ -353,18 +353,24 @@
 
 .property-description {
   margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #4f46e5;
 }
 
 .property-description h3 {
   margin: 0 0 1rem 0;
   color: #374151;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
+  font-weight: 600;
 }
 
 .property-description p {
   margin: 0;
   color: #4b5563;
-  line-height: 1.6;
+  line-height: 1.7;
+  font-size: 1rem;
 }
 
 .property-stats {
@@ -617,7 +623,16 @@ textarea {
   }
   
   .property-details-content {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+  
+  .main-image {
+    height: 300px;
+  }
+  
+  .property-info-section {
+    padding: 1rem;
+    margin-top: 1rem;
   }
   
   .property-details-header {
@@ -646,5 +661,9 @@ textarea {
   .contact-modal {
     width: 95%;
     max-height: 80vh;
+  }
+  
+  .property-description {
+    padding: 1rem;
   }
 }

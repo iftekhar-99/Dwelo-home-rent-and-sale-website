@@ -132,10 +132,27 @@ const PropertyDetails = () => {
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const isOwner = (property?.ownerId?._id || property?.ownerId) === currentUser._id;
 
+  // Function to get user-specific dashboard route
+  const getUserDashboardRoute = () => {
+    const userRole = currentUser?.role;
+    switch (userRole) {
+      case 'admin':
+        return '/admin/dashboard';
+      case 'owner':
+        return '/owner/dashboard';
+      case 'buyer':
+        return '/buyer/dashboard';
+      case 'renter':
+        return '/renter/dashboard';
+      default:
+        return '/dashboard';
+    }
+  };
+
   return (
     <div className="property-details">
       <div className="property-details-header">
-        <button onClick={() => navigate('/owner/dashboard')} className="back-btn">
+        <button onClick={() => navigate(getUserDashboardRoute())} className="back-btn">
           <FaArrowLeft /> Back to Dashboard
         </button>
         <div className="property-actions">

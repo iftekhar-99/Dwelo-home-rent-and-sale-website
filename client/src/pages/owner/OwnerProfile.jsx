@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome, FaList, FaBell, FaUser, FaSignOutAlt, FaEnvelope, FaEdit, FaSave, FaTimes, FaCamera } from 'react-icons/fa';
 import { BsFillHouseDoorFill, BsGraphUp } from 'react-icons/bs';
+import { fetchWithAuth } from '../../utils/api';
 import './OwnerProfile.css';
 
 const OwnerProfile = () => {
@@ -40,12 +41,7 @@ const OwnerProfile = () => {
         return;
       }
 
-      const response = await fetch('/api/owner/profile', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await fetchWithAuth('/api/owner/profile');
 
       const data = await response.json();
 
@@ -93,12 +89,8 @@ const OwnerProfile = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/owner/profile', {
+      const response = await fetchWithAuth('/api/owner/profile', {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify(formData)
       });
 

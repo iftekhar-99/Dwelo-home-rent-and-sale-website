@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaCheck, FaTimes, FaCalendar, FaDollarSign, FaEye } from 'react-icons/fa';
+import { fetchWithAuth } from '../../utils/api';
 import './UserRequests.css';
 
 const UserRequests = () => {
@@ -25,11 +26,7 @@ const UserRequests = () => {
         return;
       }
 
-      const response = await fetch('/api/property-requests/user', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetchWithAuth('/api/property-requests/user');
 
       const data = await response.json();
       if (response.ok && data.success) {

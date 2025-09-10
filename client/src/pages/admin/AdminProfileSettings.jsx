@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import './AdminProfileSettings.css';
 
 const AdminProfileSettings = () => {
@@ -22,9 +22,7 @@ const AdminProfileSettings = () => {
   const fetchAdminProfile = async () => {
     try {
       const adminToken = localStorage.getItem('adminToken');
-      const response = await axios.get('/api/admin/profile', {
-        headers: { 'Authorization': `Bearer ${adminToken}` }
-      });
+      const response = await api.get('/api/admin/profile');
 
       if (response.data.success) {
         const adminData = response.data.data.admin;
@@ -71,9 +69,7 @@ const AdminProfileSettings = () => {
         updateData.newPassword = formData.newPassword;
       }
 
-      const response = await axios.put('/api/admin/profile', updateData, {
-        headers: { 'Authorization': `Bearer ${adminToken}` }
-      });
+      const response = await api.put('/api/admin/profile', updateData);
 
       if (response.data.success) {
         setMessage('Profile updated successfully!');

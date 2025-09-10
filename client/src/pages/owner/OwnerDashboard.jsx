@@ -4,6 +4,7 @@ import './OwnerDashboard.css';
 import { FaHome, FaList, FaBell, FaUser, FaSignOutAlt, FaEnvelope } from 'react-icons/fa';
 import { BsFillHouseDoorFill, BsGraphUp } from 'react-icons/bs';
 import { ChatButton } from "../../components/chat";
+import { fetchWithAuth } from '../../utils/api';
 
 const OwnerDashboard = () => {
   const [stats, setStats] = useState({
@@ -33,12 +34,7 @@ const OwnerDashboard = () => {
         return;
       }
 
-      const response = await fetch('/api/owner/dashboard', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await fetchWithAuth('/api/owner/dashboard');
       
       const data = await response.json();
       

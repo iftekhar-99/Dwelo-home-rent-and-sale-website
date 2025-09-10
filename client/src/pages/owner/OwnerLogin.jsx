@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import './OwnerLogin.css';
+import api from '../../utils/api';
+import '../common/Auth.css';
 
 const OwnerLogin = () => {
   const [formData, setFormData] = useState({
@@ -27,7 +27,7 @@ const OwnerLogin = () => {
     setError('');
 
     try {
-      const response = await axios.post('/api/owners/login', formData);
+      const response = await api.post('/api/owners/login', formData);
       
       if (response.data.success) {
         // Store owner data and token

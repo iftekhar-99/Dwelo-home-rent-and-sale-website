@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import './UserProfile.css'; // Assuming you'll create this file for styling
+import api from '../../utils/api';
+import { useNavigate } from 'react-router-dom';
+import './UserProfile.css';
 
 const UserProfile = () => {
   const [user, setUser] = useState(null);
@@ -25,9 +26,7 @@ const UserProfile = () => {
           return;
         }
 
-        const response = await axios.get('/api/auth/profile', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.get('/api/user/profile');
 
         if (response.data.success) {
           const fetchedUser = response.data.data.user;
@@ -72,9 +71,7 @@ const UserProfile = () => {
         name: profileData.name,
         phone: profileData.phone
       };
-      const response = await axios.put('/api/auth/profile', updateData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.put('/api/user/profile', updateData);
 
       if (response.data.success) {
         const updatedUser = response.data.data.user;
@@ -83,9 +80,7 @@ const UserProfile = () => {
         setUser(updatedUser);
         // Re-fetch profile data to get updated roleData if needed (e.g., preferences)
         // This is a simple approach; for complex scenarios, consider more granular state updates
-        const updatedProfileResponse = await axios.get('/api/auth/profile', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const updatedProfileResponse = await api.get('/api/user/profile');
         if (updatedProfileResponse.data.success) {
           const fetchedUser = updatedProfileResponse.data.data.user;
           const fetchedRoleData = updatedProfileResponse.data.data.roleData;

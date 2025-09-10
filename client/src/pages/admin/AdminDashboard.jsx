@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../utils/api';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -31,16 +31,16 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('adminToken');
       const headers = { Authorization: `Bearer ${token}` };
-      const metricsResponse = await axios.get('/api/admin/dashboard', { headers });
+      const metricsResponse = await api.get('/api/admin/dashboard');
       setMetrics(metricsResponse.data.data);
 
-      const pendingPropertiesResponse = await axios.get('/api/admin/properties/pending', { headers });
+      const pendingPropertiesResponse = await api.get('/api/admin/properties/pending');
       setPendingProperties(pendingPropertiesResponse.data.data.properties);
 
-      const allPropertiesResponse = await axios.get('/api/admin/properties/all', { headers });
+      const allPropertiesResponse = await api.get('/api/admin/properties/all');
       setAllProperties(allPropertiesResponse.data.data.properties);
       // Update requests removed
-      const reportsResponse = await axios.get('/api/admin/reports/pending', { headers });
+      const reportsResponse = await api.get('/api/admin/reports/pending');
       setPendingReports(reportsResponse.data.data.reports);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -84,7 +84,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('adminToken');
       const headers = { Authorization: `Bearer ${token}` };
-      await axios.put(`/api/admin/reports/${reportId}/handle`, { action, details }, { headers });
+      await api.put(`/api/admin/reports/${reportId}/handle`, { action, details });
       fetchDashboardData();
     } catch (error) {
       console.error('Error handling report action:', error);

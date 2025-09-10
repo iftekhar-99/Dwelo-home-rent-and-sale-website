@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaCheck, FaTimes, FaEnvelope, FaPhone, FaCalendar, FaDollarSign } from 'react-icons/fa';
+import { fetchWithAuth } from '../../utils/api';
 import './OwnerRequests.css';
 
 const OwnerRequests = () => {
@@ -27,11 +28,7 @@ const OwnerRequests = () => {
         return;
       }
 
-      const response = await fetch('/api/property-requests/owner', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetchWithAuth('/api/property-requests/owner');
 
       const data = await response.json();
       if (response.ok && data.success) {
@@ -64,12 +61,8 @@ const OwnerRequests = () => {
     setResponding(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/property-requests/${selectedRequest._id}/status`, {
+      const response = await fetchWithAuth(`/api/property-requests/${selectedRequest._id}/status`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify({
           status,
           responseMessage: responseMessage.trim() || undefined

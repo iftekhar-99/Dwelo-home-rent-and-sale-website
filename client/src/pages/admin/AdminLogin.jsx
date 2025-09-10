@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../utils/api';
 import '../common/Auth.css';
 
 const AdminLogin = () => {
@@ -58,7 +58,7 @@ const AdminLogin = () => {
     setMessage('');
 
     try {
-      const response = await axios.post('/api/admin/login', {
+      const response = await api.post('/api/admin/login', {
         email: formData.email,
         password: formData.password
       });

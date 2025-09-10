@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../utils/api';
 import './Auth.css';
 
 const Register = () => {
@@ -166,7 +166,7 @@ const Register = () => {
       }
 
       console.log('Sending registration request...'); // Debug log
-      const response = await axios.post('/api/auth/register', formDataToSend, {
+      const response = await api.post('/api/auth/register', formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }

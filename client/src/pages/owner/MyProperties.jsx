@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
+import { fetchWithAuth } from '../../utils/api';
 import './MyProperties.css';
 
 const MyProperties = () => {
@@ -21,11 +22,7 @@ const MyProperties = () => {
         return;
       }
 
-      const response = await fetch('/api/owner/properties', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetchWithAuth('/api/owner/properties');
 
       const data = await response.json();
 

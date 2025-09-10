@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../utils/api';
 import { ChatButton } from '../../components/chat';
 import { FaHome, FaHeart, FaSignOutAlt, FaEnvelope, FaUserCircle } from 'react-icons/fa';
 import UserProfile from './UserProfile';
@@ -77,12 +77,8 @@ const UserDashboard = () => {
   const fetchProperties = async (currentFilters) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await axios.get('/api/properties', {
-        params: currentFilters,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const response = await api.get('/api/properties', {
+        params: currentFilters
       });
       
       if (response.data && response.data.data) {
@@ -143,6 +139,27 @@ const UserDashboard = () => {
     // Navigate to the dedicated property details page instead of showing modal
     const userRole = user?.role || 'buyer';
     navigate(`/${userRole}/property/${property._id}`);
+  };
+
+  const handlePropertyRequest = async (propertyId, requestType, message) => {
+    try {
+      const requestData = {
+        propertyId,
+        requestType,
+        message
+      };
+
+      const response = await api.post('/api/property-requests', requestData);
+      
+      if (response.data.success) {
+        alert('Request sent successfully!');
+      } else {
+        alert('Failed to send request. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error sending property request:', error);
+      alert('Failed to send request. Please try again.');
+    }
   };
 
   const clearFilters = () => {

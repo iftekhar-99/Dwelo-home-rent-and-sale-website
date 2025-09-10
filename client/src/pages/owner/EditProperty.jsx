@@ -47,7 +47,10 @@ const EditProperty = () => {
 
   const fetchPropertyDetails = async () => {
     try {
+      console.log('[EditProperty] Fetching property with ID:', id);
       const anyToken = localStorage.getItem('ownerToken') || localStorage.getItem('token') || localStorage.getItem('adminToken');
+      console.log('[EditProperty] Owner token available:', !!anyToken);
+      
       if (!anyToken) {
         navigate('/owner/login');
         return;
@@ -56,9 +59,15 @@ const EditProperty = () => {
       const response = await fetchWithAuth(`/api/owner/properties/${id}`);
 
       const data = await response.json();
+      
+      console.log('[EditProperty] Fetch response:', response.status, data);
 
       if (response.ok && data.success) {
        const property = data.data.property;
+       console.log('[EditProperty] Property loaded successfully:', property.title);
+       
+       // Clear any existing errors
+       setErrors({});
         
         // Set original images for reference
         if (property.images && Array.isArray(property.images)) {
@@ -98,11 +107,12 @@ const EditProperty = () => {
           setPreviewImages(imageUrls);
         }
       } else {
+        console.log('[EditProperty] Failed to fetch property:', data);
         setErrors({ submit: data.message || 'Failed to fetch property details' });
       }
     } catch (error) {
-      console.error('Error fetching property details:', error);
-      setErrors({ submit: 'Failed to fetch property details' });
+      console.error('[EditProperty] Error fetching property details:', error);
+      setErrors({ submit: `Failed to fetch property details: ${error.message}` });
     } finally {
       setLoading(false);
     }
@@ -197,7 +207,15 @@ const EditProperty = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateStep(currentStep)) return;
+    console.log('[EditProperty] Starting form submission...');
+    console.log('[EditProperty] Current step:', currentStep);
+    console.log('[EditProperty] Form data:', formData);
+    
+    if (!validateStep(currentStep)) {
+      console.log('[EditProperty] Validation failed for step', currentStep);
+      console.log('[EditProperty] Current errors:', errors);
+      return;
+    }
     
     setIsSubmitting(true);
     
@@ -205,10 +223,12 @@ const EditProperty = () => {
       const ownerToken = localStorage.getItem('ownerToken');
       console.log('[EditProperty] Owner token check:', ownerToken ? 'Token exists' : 'No token found');
       if (!ownerToken) {
+        console.log('[EditProperty] No owner token found, setting error');
         setErrors(prev => ({
           ...prev,
           submit: 'Please log in to update the property.'
         }));
+        setIsSubmitting(false);
         return;
       }
       

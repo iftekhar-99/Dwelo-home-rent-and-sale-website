@@ -4,6 +4,9 @@
   "description": "Backend server for Dwelo home rent and sale website",
   "main": "index.js",
   "type": "module",
+  "engines": {
+    "node": ">=16.20.1"
+  },
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js"

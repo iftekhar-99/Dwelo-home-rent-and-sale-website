@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../utils/api';
+import { fetchWithAuth } from '../../utils/api';
 import './AdminProfileSettings.css';
 
 const AdminProfileSettings = () => {
@@ -21,11 +21,11 @@ const AdminProfileSettings = () => {
 
   const fetchAdminProfile = async () => {
     try {
-      const adminToken = localStorage.getItem('adminToken');
-      const response = await api.get('/api/admin/profile');
+      const response = await fetchWithAuth('/api/admin/profile');
+      const responseData = await response.json();
 
-      if (response.data.success) {
-        const adminData = response.data.data.admin;
+      if (responseData.success) {
+        const adminData = responseData.data.admin;
         setAdmin(adminData);
         setFormData({
           name: adminData.userId.name || '',
@@ -55,7 +55,6 @@ const AdminProfileSettings = () => {
     setMessage('');
 
     try {
-      const adminToken = localStorage.getItem('adminToken');
       const updateData = {};
 
       if (formData.name.trim() && formData.name !== admin.userId.name) {
@@ -69,11 +68,15 @@ const AdminProfileSettings = () => {
         updateData.newPassword = formData.newPassword;
       }
 
-      const response = await api.put('/api/admin/profile', updateData);
+      const response = await fetchWithAuth('/api/admin/profile', {
+        method: 'PUT',
+        body: JSON.stringify(updateData)
+      });
+      const responseData = await response.json();
 
-      if (response.data.success) {
+      if (responseData.success) {
         setMessage('Profile updated successfully!');
-        setAdmin(response.data.data.admin);
+        setAdmin(responseData.data.admin);
         setFormData(prev => ({
           ...prev,
           currentPassword: '',
@@ -82,7 +85,13 @@ const AdminProfileSettings = () => {
         }));
       }
     } catch (error) {
-      setMessage(error.response?.data?.message || 'Failed to update profile');
+      if (error.status === 401) {
+        localStorage.removeItem('adminToken');
+        window.location.href = '/admin/login';
+        return;
+      }
+      const errorData = await error.json().catch(() => ({}));
+      setMessage(errorData.message || 'Failed to update profile');
     } finally {
       setIsLoading(false);
     }

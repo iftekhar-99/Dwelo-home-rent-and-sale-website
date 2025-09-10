@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../utils/api';
+import { fetchWithAuth } from '../../utils/api';
 import './Auth.css';
-
-// Get API base URL from environment variable
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5002';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -108,22 +105,37 @@ const Register = () => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-    
+
     try {
-      // Validate password match
+      // Validate required fields
+      if (!formData.name || !formData.email || !formData.password) {
+        setError('Please fill in all required fields');
+        setIsLoading(false);
+        return;
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        setError('Please enter a valid email address');
+        setIsLoading(false);
+        return;
+      }
+
+      // Validate password strength
+      if (passwordStrength.score < 5) {
+        setError('Password does not meet strength requirements');
+        setIsLoading(false);
+        return;
+      }
+
+      // Validate passwords match
       if (formData.password !== formData.confirmPassword) {
         setError('Passwords do not match');
         setIsLoading(false);
         return;
       }
-      
-      // Validate password strength
-      if (passwordStrength.score < 3) { // Reduced from 5 to 3 for easier registration
-        setError('Please choose a stronger password');
-        setIsLoading(false);
-        return;
-      }
-      
+
       // Validate role
       const validRoles = ['buyer', 'renter', 'owner'];
       if (!validRoles.includes(formData.role)) {
@@ -139,58 +151,69 @@ const Register = () => {
       formDataToSend.append('email', formData.email);
       formDataToSend.append('password', formData.password);
       formDataToSend.append('role', formData.role);
-      formDataToSend.append('phone', formData.phone);
-      
-      // Append verification docs for owner role
-      if (formData.role === 'owner' && formData.verificationDocs) {
+      if (formData.phone) {
+        formDataToSend.append('phone', formData.phone);
+      }
+
+      // Append file if role is owner
+      if (formData.role === 'owner') {
+        if (!formData.verificationDocs) {
+          setError('Verification documents are required for owners');
+          setIsLoading(false);
+          return;
+        }
         formDataToSend.append('verificationDocs', formData.verificationDocs);
       }
-      
-      console.log('Sending registration data to:', `${API_BASE}/api/auth/register`);
-      
-      // Send registration request
-      const response = await fetch(`${API_BASE}/api/auth/register`, {
+
+      console.log('Sending registration request...'); // Debug log
+      const response = await fetchWithAuth('/api/auth/register', {
         method: 'POST',
-        body: formDataToSend,
-        // Don't set Content-Type header when sending FormData
+        body: formDataToSend
       });
       
-      const data = await response.json();
-      console.log('Registration response:', data);
+      const responseData = await response.json();
+      console.log('Registration response:', responseData); // Debug log
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-      
-      // Store tokens and user data
-      if (data.token) {
-        if (formData.role === 'owner') {
-          localStorage.setItem('ownerToken', data.token);
-          localStorage.setItem('owner', JSON.stringify(data.user));
-        } else if (formData.role === 'admin') {
-          localStorage.setItem('adminToken', data.token);
-          localStorage.setItem('admin', JSON.stringify(data.user));
-        } else {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
+      if (responseData.success) {
+        // Store token if provided
+        if (responseData.data?.token) {
+          localStorage.setItem('token', responseData.data.token);
+          localStorage.setItem('user', JSON.stringify(responseData.data.user));
         }
-      }
-      
-      // Redirect based on role
-      if (formData.role === 'owner') {
-        navigate('/owner/login');
-      } else if (formData.role === 'admin') {
-        navigate('/admin/login');
-      } else {
+        
+        // Show success message
+        alert('Registration successful! Please log in to continue.');
         navigate('/login');
+      } else {
+        setError(responseData.message || 'Registration failed. Please try again.');
       }
-      
     } catch (err) {
       console.error('Registration error:', err);
-      setError(err.message || 'Failed to register. Please try again.');
+      
+      if (err.status && err.status >= 400) {
+        try {
+          const errorData = await err.json();
+          if (errorData.errors && Array.isArray(errorData.errors)) {
+            setError(errorData.errors.join(', '));
+          } else {
+            setError(errorData.message || 'Registration failed. Please try again.');
+          }
+        } catch {
+          setError('Registration failed. Please try again.');
+        }
+      } else {
+        setError('Registration failed. Please check your connection and try again.');
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getPasswordStrengthColor = () => {
+    if (passwordStrength.score <= 2) return '#ff4444';
+    if (passwordStrength.score <= 3) return '#ff8800';
+    if (passwordStrength.score <= 4) return '#ffbb33';
+    return '#00C851';
   };
 
   const getPasswordStrengthText = () => {
@@ -249,20 +272,21 @@ const Register = () => {
             required
           />
           {formData.password && (
-            <div className="password-feedback">
-              <div className="strength-meter">
+            <div className="password-strength">
+              <div className="strength-bar">
                 <div 
-                  className="strength-bar" 
+                  className="strength-fill" 
                   style={{ 
                     width: `${(passwordStrength.score / 5) * 100}%`,
-                    backgroundColor: passwordStrength.score < 3 ? '#ff4d4d' : 
-                                    passwordStrength.score < 4 ? '#ffad4d' : '#4CAF50'
+                    backgroundColor: getPasswordStrengthColor()
                   }}
                 ></div>
               </div>
-              <p className="strength-text">{getPasswordStrengthText()}</p>
+              <span className="strength-text" style={{ color: getPasswordStrengthColor() }}>
+                {getPasswordStrengthText()}
+              </span>
               {passwordStrength.feedback.length > 0 && (
-                <ul>
+                <ul className="strength-feedback">
                   {passwordStrength.feedback.map((item, index) => (
                     <li key={index}>{item}</li>
                   ))}
@@ -338,7 +362,7 @@ const Register = () => {
           </div>
         )}
 
-        <button type="submit" disabled={isLoading || passwordStrength.score < 3}>
+        <button type="submit" disabled={isLoading || passwordStrength.score < 5}>
           {isLoading ? 'Creating Account...' : 'Create Account'}
         </button>
       </form>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../utils/api';
+import { fetchWithAuth } from '../../utils/api';
 import '../common/Auth.css';
 
 const AdminLogin = () => {
@@ -58,35 +58,42 @@ const AdminLogin = () => {
     setMessage('');
 
     try {
-      const response = await api.post('/api/admin/login', {
-        email: formData.email,
-        password: formData.password
+      const response = await fetchWithAuth('/api/admin/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
       });
 
-      if (response.data.success) {
+      const responseData = await response.json();
+
+      if (responseData.success) {
         setMessage('Admin login successful! Redirecting to dashboard...');
         
         // Store admin data and token in localStorage
-        localStorage.setItem('admin', JSON.stringify(response.data.data.admin));
-        localStorage.setItem('adminToken', response.data.data.token);
+        localStorage.setItem('admin', JSON.stringify(responseData.data.admin));
+        localStorage.setItem('adminToken', responseData.data.token);
         
         setTimeout(() => {
           navigate('/admin/dashboard');
         }, 1500);
       } else {
-        setMessage(response.data.message || 'Admin login failed');
+        setMessage(responseData.message || 'Admin login failed');
       }
     } catch (error) {
       console.error('Admin login error:', error);
-      if (error.response?.data) {
-        const errorData = error.response.data;
-        if (errorData.errors && Array.isArray(errorData.errors)) {
-          setMessage(errorData.errors.join(', '));
-        } else {
-          setMessage(errorData.message || 'Admin login failed');
+      if (error.status && error.status >= 400) {
+        try {
+          const errorData = await error.json();
+          if (errorData.errors && Array.isArray(errorData.errors)) {
+            setMessage(errorData.errors.join(', '));
+          } else {
+            setMessage(errorData.message || 'Admin login failed');
+          }
+        } catch {
+          setMessage('Admin login failed. Please try again.');
         }
-      } else if (error.code === 'ECONNREFUSED') {
-        setMessage('Cannot connect to server. Please check if the server is running.');
       } else {
         setMessage('Network error. Please try again.');
       }

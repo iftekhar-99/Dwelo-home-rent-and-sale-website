@@ -13,7 +13,6 @@ import {
 } from '../controllers/authController.js';
 import {
   authenticateToken,
-  authRateLimit,
   authLogging
 } from '../middleware/authMiddleware.js';
 import { asyncHandler } from '../middleware/errorMiddleware.js';
@@ -64,14 +63,12 @@ const upload = multer({
 
 // Public routes (no authentication required)
 router.post('/register', 
-  authRateLimit,
   authLogging('register'),
   upload.single('verificationDocs'),
   asyncHandler(register)
 );
 
 router.post('/login',
-  authRateLimit,
   authLogging('login'),
   asyncHandler(login)
 );

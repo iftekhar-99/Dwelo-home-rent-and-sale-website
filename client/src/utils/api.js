@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with base URL from environment variable
 const api = axios.create({
-  baseURL: import.meta.env.VITE_APP_API_URL || 'http://localhost:5000',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5002',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -62,17 +62,22 @@ export default api;
 
 // Helper function for fetch requests with proper base URL
 export const fetchWithAuth = async (endpoint, options = {}) => {
-  const baseURL = import.meta.env.VITE_APP_API_URL || 'http://localhost:5000';
+  const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5002';
   const url = `${baseURL}${endpoint}`;
   
   const token = localStorage.getItem('token');
   const adminToken = localStorage.getItem('adminToken');
   const ownerToken = localStorage.getItem('ownerToken');
-  
+
+  const isFormData = options?.body instanceof FormData;
   const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers || {}),
   };
+
+  // Only set JSON content-type when body is not FormData and content-type not already provided
+  if (!isFormData && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
   
   if (token) {
     headers.Authorization = `Bearer ${token}`;

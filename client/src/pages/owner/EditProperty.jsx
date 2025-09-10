@@ -53,7 +53,7 @@ const EditProperty = () => {
         return;
       }
 
-      const response = await fetchWithAuth(`/api/properties/${id}`);
+      const response = await fetchWithAuth(`/api/owner/properties/${id}`);
 
       const data = await response.json();
 
@@ -225,7 +225,7 @@ const EditProperty = () => {
         
         const uploadData = await uploadResponse.json();
         
-        if (!uploadResponse.ok) {
+        if (!uploadResponse.ok || !uploadData.success) {
           throw new Error(uploadData.message || 'Failed to upload images');
         }
         

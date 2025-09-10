@@ -21,11 +21,12 @@ const OwnerPropertyDetails = () => {
     try {
       setLoading(true);
       const response = await fetchWithAuth(`/api/owner/properties/${id}`);
+      const data = await response.json();
       
-      if (response.success) {
-        setProperty(response.data.property);
+      if (data.success) {
+        setProperty(data.data.property);
       } else {
-        setError(response.message || 'Failed to fetch property details');
+        setError(data.message || 'Failed to fetch property details');
       }
     } catch (error) {
       console.error('Error fetching property details:', error);
@@ -45,13 +46,14 @@ const OwnerPropertyDetails = () => {
       const response = await fetchWithAuth(`/api/owner/properties/${id}`, {
         method: 'DELETE'
       });
+      const data = await response.json();
       
-      if (response.success) {
+      if (data.success) {
         navigate('/owner/properties', { 
           state: { message: 'Property deleted successfully' } 
         });
       } else {
-        setError(response.message || 'Failed to delete property');
+        setError(data.message || 'Failed to delete property');
       }
     } catch (error) {
       console.error('Error deleting property:', error);

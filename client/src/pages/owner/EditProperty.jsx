@@ -30,6 +30,7 @@ const EditProperty = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [originalImages, setOriginalImages] = useState([]);
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5002';
 
   const propertyTypes = [
     'apartment', 'house', 'condo', 'townhouse', 'villa', 'land', 'commercial'
@@ -46,9 +47,9 @@ const EditProperty = () => {
 
   const fetchPropertyDetails = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
+      const anyToken = localStorage.getItem('ownerToken') || localStorage.getItem('token') || localStorage.getItem('adminToken');
+      if (!anyToken) {
+        navigate('/owner/login');
         return;
       }
 
@@ -90,9 +91,9 @@ const EditProperty = () => {
         if (property.images && property.images.length > 0) {
           const imageUrls = property.images.map(img => {
             if (typeof img === 'string') {
-              return img.startsWith('http') ? img : `http://localhost:5002${img}`;
+              return img.startsWith('http') ? img : `${API_BASE}${img}`;
             }
-            return img.url ? (img.url.startsWith('http') ? img.url : `http://localhost:5002${img.url}`) : '';
+            return img.url ? (img.url.startsWith('http') ? img.url : `${API_BASE}${img.url}`) : '';
           });
           setPreviewImages(imageUrls);
         }
@@ -201,9 +202,9 @@ const EditProperty = () => {
     setIsSubmitting(true);
     
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
+      const ownerToken = localStorage.getItem('ownerToken');
+      if (!ownerToken) {
+        navigate('/owner/login');
         return;
       }
       
@@ -216,7 +217,7 @@ const EditProperty = () => {
           formData.append('images', image);
         });
         
-        const uploadResponse = await fetchWithAuth('/api/upload', {
+        const uploadResponse = await fetchWithAuth('/api/owner/upload-images', {
           method: 'POST',
           body: formData,
           headers: {}

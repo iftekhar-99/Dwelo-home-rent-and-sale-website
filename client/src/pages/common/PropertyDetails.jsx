@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FaArrowLeft, FaEdit, FaTrash, FaEye, FaHeart } from 'react-icons/fa';
 import { fetchWithAuth } from '../../utils/api';
 import './PropertyDetails.css';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5002';
 
 const PropertyDetails = () => {
   const { id } = useParams();
@@ -17,9 +18,9 @@ const PropertyDetails = () => {
 
   const fetchPropertyDetails = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
+      const anyToken = localStorage.getItem('ownerToken') || localStorage.getItem('token') || localStorage.getItem('adminToken');
+      if (!anyToken) {
+        navigate('/owner/login');
         return;
       }
 
@@ -59,13 +60,13 @@ const PropertyDetails = () => {
 
   const handleEdit = () => {
     // Check if user is the owner before allowing edit
-    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const owner = JSON.parse(localStorage.getItem('owner') || '{}');
     
     // Handle case where ownerId might be an object with _id property
     const ownerId = property?.ownerId?._id || property?.ownerId;
-    const currentUserId = currentUser?._id;
+    const currentOwnerId = owner?.id || owner?._id;
     
-    if (property && ownerId && currentUserId && ownerId === currentUserId) {
+    if (property && ownerId && currentOwnerId && ownerId === currentOwnerId) {
       navigate(`/owner/edit-property/${id}`);
     } else {
       alert('You do not have permission to edit this property');
@@ -169,8 +170,8 @@ const PropertyDetails = () => {
               <div className="main-image">
                 <img 
                   src={typeof property.images[0] === 'string' ? 
-                    (property.images[0].startsWith('http') ? property.images[0] : `http://localhost:5002${property.images[0]}`) : 
-                    (property.images[0].url.startsWith('http') ? property.images[0].url : `http://localhost:5002${property.images[0].url}`)} 
+                    (property.images[0].startsWith('http') ? property.images[0] : `${API_BASE}${property.images[0]}`) : 
+                    (property.images[0].url.startsWith('http') ? property.images[0].url : `${API_BASE}${property.images[0].url}`)} 
                   alt={`${property.title}`}
                   onError={(e) => {
                     console.log('Image failed to load:', e.target.src);

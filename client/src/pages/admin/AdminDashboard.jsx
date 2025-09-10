@@ -3,50 +3,66 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
 import './AdminDashboard.css';
 
+// Get API base URL from environment variable
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5002';
+
 const AdminDashboard = () => {
   const [metrics, setMetrics] = useState(null);
   const [pendingProperties, setPendingProperties] = useState([]);
-  // Removed update requests (owner edits now apply immediately)
-  const [selectedProperty, setSelectedProperty] = useState(null);
+  const [allProperties, setAllProperties] = useState([]);
   const [pendingReports, setPendingReports] = useState([]);
-      const [allProperties, setAllProperties] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
-  // Single list for new property approvals only
-  const [admin, setAdmin] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [selectedProperty, setSelectedProperty] = useState(null);
+  const [showPropertyModal, setShowPropertyModal] = useState(false);
+  
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const adminData = localStorage.getItem('admin');
+  // Fetch dashboard data
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    setError('');
+    
+    // Check for admin token
     const adminToken = localStorage.getItem('adminToken');
-    if (!adminData || !adminToken) {
+    const adminData = localStorage.getItem('admin');
+    
+    if (!adminToken || !adminData) {
+      console.error('No admin token found');
       navigate('/admin/login');
       return;
     }
-    setAdmin(JSON.parse(adminData));
-    fetchDashboardData();
-  }, [navigate]);
-
-  const fetchDashboardData = async () => {
+    
     try {
-      const token = localStorage.getItem('adminToken');
-      const headers = { Authorization: `Bearer ${token}` };
+      // Fetch dashboard metrics
       const metricsResponse = await api.get('/api/admin/dashboard');
-      setMetrics(metricsResponse.data.data);
-
+      setMetrics(metricsResponse.data);
+      console.log('Dashboard metrics:', metricsResponse.data);
+      
+      // Fetch pending properties
       const pendingPropertiesResponse = await api.get('/api/admin/properties/pending');
-      setPendingProperties(pendingPropertiesResponse.data.data.properties);
-
-      const allPropertiesResponse = await api.get('/api/admin/properties/all');
-      setAllProperties(allPropertiesResponse.data.data.properties);
-      // Update requests removed
-      const reportsResponse = await api.get('/api/admin/reports/pending');
-      setPendingReports(reportsResponse.data.data.reports);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      if (error.response?.status === 401) {
-        localStorage.removeItem('admin');
+      setPendingProperties(pendingPropertiesResponse.data);
+      console.log('Pending properties:', pendingPropertiesResponse.data);
+      
+      // Fetch all properties
+      const allPropertiesResponse = await api.get('/api/admin/properties');
+      setAllProperties(allPropertiesResponse.data);
+      console.log('All properties:', allPropertiesResponse.data);
+      
+      // Fetch pending reports
+      const pendingReportsResponse = await api.get('/api/admin/reports/pending');
+      setPendingReports(pendingReportsResponse.data);
+      console.log('Pending reports:', pendingReportsResponse.data);
+      
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to load dashboard data. Please try again.');
+      
+      // Handle 401 errors
+      if (err.response && err.response.status === 401) {
         localStorage.removeItem('adminToken');
+        localStorage.removeItem('admin');
         navigate('/admin/login');
       }
     } finally {
@@ -54,340 +70,426 @@ const AdminDashboard = () => {
     }
   };
 
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
   const handleLogout = () => {
-    localStorage.removeItem('admin');
     localStorage.removeItem('adminToken');
+    localStorage.removeItem('admin');
     navigate('/admin/login');
   };
 
-  const handlePropertyAction = async (propertyId, action, reason = '') => {
+  const handlePropertyAction = async (propertyId, action) => {
     try {
-      const token = localStorage.getItem('adminToken');
-      const headers = { Authorization: `Bearer ${token}` };
-      await api.put(`/api/admin/properties/${propertyId}/approve`, { action, reason });
+      const adminToken = localStorage.getItem('adminToken');
+      if (!adminToken) {
+        navigate('/admin/login');
+        return;
+      }
+      
+      await api.put(`/api/admin/properties/${propertyId}/${action}`);
+      
+      // Refresh data after action
       fetchDashboardData();
-      setSelectedProperty(null);
-    } catch (error) {
-      console.error('Error handling property action:', error);
+      
+      // Close modal if open
+      if (showPropertyModal) {
+        setShowPropertyModal(false);
+      }
+    } catch (err) {
+      console.error(`Error ${action} property:`, err);
+      setError(`Failed to ${action} property. Please try again.`);
     }
   };
 
-  // Update request handler removed
+  const handleReportAction = async (reportId, action) => {
+    try {
+      const adminToken = localStorage.getItem('adminToken');
+      if (!adminToken) {
+        navigate('/admin/login');
+        return;
+      }
+      
+      await api.put(`/api/admin/reports/${reportId}/${action}`);
+      
+      // Refresh data after action
+      fetchDashboardData();
+    } catch (err) {
+      console.error(`Error ${action} report:`, err);
+      setError(`Failed to ${action} report. Please try again.`);
+    }
+  };
 
   const viewPropertyDetails = (property) => {
-    setSelectedProperty({ ...property });
+    setSelectedProperty(property);
+    setShowPropertyModal(true);
   };
 
-  const closePropertyDetails = () => setSelectedProperty(null);
+  // Tab content for dashboard
+  const renderDashboardTab = () => (
+    <div className="dashboard-tab">
+      {loading ? (
+        <div className="loading">Loading dashboard data...</div>
+      ) : error ? (
+        <div className="error">{error}</div>
+      ) : metrics ? (
+        <>
+          <div className="metrics-grid">
+            <div className="metric-card">
+              <h3>Total Users</h3>
+              <p className="metric-value">{metrics.totalUsers}</p>
+              <div className="metric-breakdown">
+                <span>Buyers: {metrics.buyerCount}</span>
+                <span>Renters: {metrics.renterCount}</span>
+                <span>Owners: {metrics.ownerCount}</span>
+              </div>
+            </div>
+            <div className="metric-card">
+              <h3>Properties</h3>
+              <p className="metric-value">{metrics.totalProperties}</p>
+              <div className="metric-breakdown">
+                <span>Pending: {metrics.pendingProperties}</span>
+                <span>Approved: {metrics.approvedProperties}</span>
+                <span>Rejected: {metrics.rejectedProperties}</span>
+              </div>
+            </div>
+            <div className="metric-card">
+              <h3>Reports</h3>
+              <p className="metric-value">{metrics.totalReports}</p>
+              <div className="metric-breakdown">
+                <span>Pending: {metrics.pendingReports}</span>
+                <span>Resolved: {metrics.resolvedReports}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="pending-section">
+            <h3>Pending Properties</h3>
+            {pendingProperties.length > 0 ? (
+              <div className="property-cards">
+                {pendingProperties.map(property => (
+                  <div key={property._id} className="property-card">
+                    <div className="property-image">
+                      <img 
+                        src={property.images && property.images.length > 0 
+                          ? `${API_BASE}${property.images[0]}` 
+                          : '/placeholder-property.jpg'} 
+                        alt={property.title} 
+                      />
+                    </div>
+                    <div className="property-info">
+                      <h4>{property.title}</h4>
+                      <p>{property.location}</p>
+                      <p className="price">${property.price.toLocaleString()}</p>
+                      <div className="property-actions">
+                        <button 
+                          onClick={() => viewPropertyDetails(property)}
+                          className="view-btn"
+                        >
+                          View Details
+                        </button>
+                        <button 
+                          onClick={() => handlePropertyAction(property._id, 'approve')}
+                          className="approve-btn"
+                        >
+                          Approve
+                        </button>
+                        <button 
+                          onClick={() => handlePropertyAction(property._id, 'reject')}
+                          className="reject-btn"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No pending properties</p>
+            )}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
 
-  const handleReportAction = async (reportId, action, details = '') => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      const headers = { Authorization: `Bearer ${token}` };
-      await api.put(`/api/admin/reports/${reportId}/handle`, { action, details });
-      fetchDashboardData();
-    } catch (error) {
-      console.error('Error handling report action:', error);
-    }
-  };
+  // Tab content for all properties
+  const renderAllPropertiesTab = () => (
+    <div className="all-properties-tab">
+      {loading ? (
+        <div className="loading">Loading properties...</div>
+      ) : error ? (
+        <div className="error">{error}</div>
+      ) : allProperties.length > 0 ? (
+        <div className="properties-table-container">
+          <table className="properties-table">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Title</th>
+                <th>Location</th>
+                <th>Price</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Owner</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allProperties.map(property => (
+                <tr key={property._id}>
+                  <td>
+                    <img 
+                      src={property.images && property.images.length > 0 
+                        ? `${API_BASE}${property.images[0]}` 
+                        : '/placeholder-property.jpg'} 
+                      alt={property.title} 
+                      className="table-image"
+                    />
+                  </td>
+                  <td>{property.title}</td>
+                  <td>{property.location}</td>
+                  <td>${property.price.toLocaleString()}</td>
+                  <td>{property.type}</td>
+                  <td>
+                    <span className={`status-badge ${property.status}`}>
+                      {property.status}
+                    </span>
+                  </td>
+                  <td>{property.owner?.name || 'Unknown'}</td>
+                  <td>
+                    <button 
+                      onClick={() => viewPropertyDetails(property)}
+                      className="view-btn small"
+                    >
+                      View
+                    </button>
+                    {property.status === 'pending' && (
+                      <>
+                        <button 
+                          onClick={() => handlePropertyAction(property._id, 'approve')}
+                          className="approve-btn small"
+                        >
+                          Approve
+                        </button>
+                        <button 
+                          onClick={() => handlePropertyAction(property._id, 'reject')}
+                          className="reject-btn small"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p>No properties found</p>
+      )}
+    </div>
+  );
 
-  if (loading) {
+  // Tab content for reports
+  const renderReportsTab = () => (
+    <div className="reports-tab">
+      {loading ? (
+        <div className="loading">Loading reports...</div>
+      ) : error ? (
+        <div className="error">{error}</div>
+      ) : pendingReports.length > 0 ? (
+        <div className="reports-list">
+          {pendingReports.map(report => (
+            <div key={report._id} className="report-card">
+              <div className="report-header">
+                <h4>Report #{report._id.substring(0, 8)}</h4>
+                <span className="report-date">
+                  {new Date(report.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+              <div className="report-content">
+                <p><strong>Property:</strong> {report.property?.title || 'Unknown'}</p>
+                <p><strong>Reported by:</strong> {report.user?.name || 'Anonymous'}</p>
+                <p><strong>Reason:</strong> {report.reason}</p>
+                <p><strong>Description:</strong> {report.description}</p>
+              </div>
+              <div className="report-actions">
+                <button 
+                  onClick={() => handleReportAction(report._id, 'resolve')}
+                  className="resolve-btn"
+                >
+                  Mark as Resolved
+                </button>
+                {report.property && (
+                  <button 
+                    onClick={() => viewPropertyDetails(report.property)}
+                    className="view-btn"
+                  >
+                    View Property
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p>No pending reports</p>
+      )}
+    </div>
+  );
+
+  // Tab content for profile
+  const renderProfileTab = () => (
+    <div className="profile-tab">
+      <div className="profile-card">
+        <h3>Admin Profile</h3>
+        <p>Manage your admin profile and settings</p>
+        <button onClick={() => navigate('/admin/profile-settings')} className="settings-btn">
+          Profile Settings
+        </button>
+      </div>
+    </div>
+  );
+
+  // Property details modal
+  const renderPropertyModal = () => {
+    if (!selectedProperty) return null;
+    
     return (
-      <div className="admin-dashboard">
-        <div className="loading">Loading dashboard...</div>
+      <div className="modal-overlay" onClick={() => setShowPropertyModal(false)}>
+        <div className="property-modal" onClick={e => e.stopPropagation()}>
+          <button className="close-modal" onClick={() => setShowPropertyModal(false)}>×</button>
+          
+          <div className="modal-images">
+            {selectedProperty.images && selectedProperty.images.length > 0 ? (
+              <img 
+                src={`${API_BASE}${selectedProperty.images[0]}`} 
+                alt={selectedProperty.title} 
+              />
+            ) : (
+              <div className="no-image">No image available</div>
+            )}
+          </div>
+          
+          <div className="modal-content">
+            <h3>{selectedProperty.title}</h3>
+            <p className="location">{selectedProperty.location}</p>
+            <p className="price">${selectedProperty.price.toLocaleString()}</p>
+            
+            <div className="property-details">
+              <div className="detail">
+                <span className="label">Type:</span>
+                <span className="value">{selectedProperty.type}</span>
+              </div>
+              <div className="detail">
+                <span className="label">Status:</span>
+                <span className="value status-badge ${selectedProperty.status}">
+                  {selectedProperty.status}
+                </span>
+              </div>
+              <div className="detail">
+                <span className="label">Bedrooms:</span>
+                <span className="value">{selectedProperty.bedrooms}</span>
+              </div>
+              <div className="detail">
+                <span className="label">Bathrooms:</span>
+                <span className="value">{selectedProperty.bathrooms}</span>
+              </div>
+              <div className="detail">
+                <span className="label">Area:</span>
+                <span className="value">{selectedProperty.area} sq ft</span>
+              </div>
+              <div className="detail">
+                <span className="label">Owner:</span>
+                <span className="value">{selectedProperty.owner?.name || 'Unknown'}</span>
+              </div>
+            </div>
+            
+            <div className="description">
+              <h4>Description</h4>
+              <p>{selectedProperty.description}</p>
+            </div>
+            
+            {selectedProperty.status === 'pending' && (
+              <div className="modal-actions">
+                <button 
+                  onClick={() => handlePropertyAction(selectedProperty._id, 'approve')}
+                  className="approve-btn"
+                >
+                  Approve Property
+                </button>
+                <button 
+                  onClick={() => handlePropertyAction(selectedProperty._id, 'reject')}
+                  className="reject-btn"
+                >
+                  Reject Property
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
-  }
+  };
 
   return (
     <div className="admin-dashboard">
-      <header className="admin-header">
-        <div className="admin-header-content">
-          <h1>Dwelo Admin Dashboard</h1>
-          <div className="admin-user-info">
-            <span>Welcome, {admin?.name}</span>
-            <span className="admin-level">({admin?.adminLevel})</span>
-            <button onClick={handleLogout} className="logout-btn">Logout</button>
-          </div>
-        </div>
+      <header className="dashboard-header">
+        <h1>Admin Dashboard</h1>
+        <button onClick={handleLogout} className="logout-btn">Logout</button>
       </header>
-
-      {/* NEW: Rebuilt and renamed admin navigation (topbar) */}
-      <nav className="admin-topbar" role="navigation" aria-label="Admin primary">
-        <div className="admin-topbar-inner">
-          <div className="topbar-group">
-            <button
-              type="button"
-              className={`topbar-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-              onClick={() => setActiveTab('dashboard')}
-            >
-              Dashboard
-            </button>
-
-
-
-            <button
-              type="button"
-              className={`topbar-item ${activeTab === 'allProperties' ? 'active' : ''}`}
-              onClick={() => setActiveTab('allProperties')}
-            >
-              All Properties
-            </button>
-
-            <button
-              type="button"
-              className={`topbar-item ${activeTab === 'reports' ? 'active' : ''}`}
-              onClick={() => setActiveTab('reports')}
-            >
-              Reports{pendingReports?.length ? ` (${pendingReports.length})` : ''}
-            </button>
-
-            <button
-              type="button"
-              className={`topbar-item ${activeTab === 'profile' ? 'active' : ''}`}
-              onClick={() => setActiveTab('profile')}
-            >
-              Profile
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      <main className="admin-main">
-        {activeTab === 'dashboard' && (
-          <div className="dashboard-content">
-            <h2>Dashboard Overview</h2>
-            <div className="metrics-grid">
-              <div className="metric-card">
-                <h3>Users</h3>
-                <div className="metric-value">{metrics?.users?.total || 0}</div>
-                <div className="metric-details">
-                  <span>Buyers: {metrics?.users?.byRole?.buyer?.total || 0}</span>
-                  <span>Renters: {metrics?.users?.byRole?.renter?.total || 0}</span>
-                  <span>Owners: {metrics?.users?.byRole?.owner?.total || 0}</span>
-                </div>
-              </div>
-              <div className="metric-card">
-                <h3>Properties</h3>
-                <div className="metric-value">{metrics?.properties?.total || 0}</div>
-                <div className="metric-details">
-                  <span>Pending: {metrics?.properties?.pending || 0}</span>
-                  <span>Approved: {metrics?.properties?.byStatus?.approved || 0}</span>
-                  <span>Rejected: {metrics?.properties?.byStatus?.rejected || 0}</span>
-                </div>
-              </div>
-              <div className="metric-card">
-                <h3>Reports</h3>
-                <div className="metric-value">{metrics?.reports?.total || 0}</div>
-                <div className="metric-details">
-                  <span>Pending: {metrics?.reports?.pending || 0}</span>
-                  <span>Investigating: {metrics?.reports?.byStatus?.investigating || 0}</span>
-                  <span>Resolved: {metrics?.reports?.byStatus?.resolved || 0}</span>
-                </div>
-              </div>
-              <div className="metric-card">
-                <h3>Recent Activity</h3>
-                <div className="metric-details">
-                  <span>New Users: {metrics?.users?.recent || 0}</span>
-                  <span>New Properties: {metrics?.properties?.recent || 0}</span>
-                  <span>New Reports: {metrics?.reports?.recent || 0}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-
-
-
-
-        {activeTab === 'allProperties' && (
-          <div className="properties-content">
-            <h2>All Properties</h2>
-            {allProperties.length === 0 ? (
-              <p>No properties available.</p>
-            ) : (
-              <div className="properties-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Title</th>
-                      <th>Owner</th>
-                      <th>Type</th>
-                      <th>Price</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {allProperties.map(property => (
-                      <tr key={property._id}>
-                        <td>{property.title}</td>
-                        <td>{property.ownerId?.userId?.name || 'Unknown'}</td>
-                        <td>{property.propertyType}</td>
-                        <td>${property.price?.toLocaleString()}</td>
-                        <td>
-                          <span className={`status ${property.status}`}>{property.status}</span>
-                        </td>
-                        <td>
-                          <div className="action-buttons">
-                            <button onClick={() => viewPropertyDetails(property)} className="btn-view">View Details</button>
-                            {property.status === 'pending' && (
-                              <>
-                                <button onClick={() => handlePropertyAction(property._id, 'approve')} className="btn-approve">Approve</button>
-                                <button onClick={() => { const reason = prompt('Enter rejection reason:'); if (reason) handlePropertyAction(property._id, 'reject', reason); }} className="btn-reject">Reject</button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'reports' && (
-          <div className="reports-content">
-            <h2>Pending Reports</h2>
-            {pendingReports.length === 0 ? (
-              <p>No pending reports to review.</p>
-            ) : (
-              <div className="reports-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Reported By</th>
-                      <th>Type</th>
-                      <th>Reason</th>
-                      <th>Priority</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pendingReports.map(report => (
-                      <tr key={report._id}>
-                        <td>{report.reportedBy?.name}</td>
-                        <td>{report.reportType}</td>
-                        <td>{report.reason}</td>
-                        <td><span className={`priority ${report.priority}`}>{report.priority}</span></td>
-                        <td><span className={`status ${report.status}`}>{report.status}</span></td>
-                        <td>
-                          <div className="action-buttons">
-                            <button onClick={() => handleReportAction(report._id, 'warn_user')} className="btn-warn">Warn User</button>
-                            <button onClick={() => handleReportAction(report._id, 'ban_user')} className="btn-ban">Ban User</button>
-                            <button onClick={() => handleReportAction(report._id, 'delete_content')} className="btn-delete">Delete Content</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'profile' && (
-          <div className="profile-content">
-            <h2>Profile Settings</h2>
-            <p>Profile settings functionality is available. Navigate to the Profile Settings page to update your account information.</p>
-            <button onClick={() => window.location.href = '/admin/profile'} className="btn-view" style={{ marginTop: '1rem' }}>Go to Profile Settings</button>
-          </div>
-        )}
-      </main>
-
-      {selectedProperty && (
-        <div className="modal-overlay">
-          <div className="property-modal">
-            <div className="modal-header">
-              <h2>Property Details</h2>
-              <button onClick={closePropertyDetails} className="close-btn">&times;</button>
-            </div>
-            <div className="modal-content">
-              {selectedProperty.isUpdateRequest && (
-                <div className="update-request-details">
-                  <h3>Proposed Updates</h3>
-                  <p>Displaying proposed changes for property ID: {selectedProperty._id}</p>
-                </div>
-              )}
-
-              <div className="property-image-large">
-                {selectedProperty.images && selectedProperty.images.length > 0 ? (
-                  <div className="image-gallery">
-                    <img src={
-                      typeof selectedProperty.images[0] === 'string'
-                        ? `http://localhost:5002${selectedProperty.images[0].startsWith('/') ? selectedProperty.images[0] : '/' + selectedProperty.images[0]}`
-                        : (selectedProperty.images[0].url?.startsWith('http')
-                            ? selectedProperty.images[0].url
-                            : `http://localhost:5002${selectedProperty.images[0].url?.startsWith('/') ? selectedProperty.images[0].url : '/' + (selectedProperty.images[0].url || selectedProperty.images[0])}`)
-                    } alt={selectedProperty.title} />
-                    {selectedProperty.images.length > 1 && (
-                      <div className="image-count">
-                        +{selectedProperty.images.length - 1} more images
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="placeholder-image-large">No Image Available</div>
-                )}
-              </div>
-              <div className="property-details-full">
-                <div className="price-section">
-                  <h3>${selectedProperty.price?.toLocaleString()}</h3>
-                  <span className="listing-type">{selectedProperty.listingType}</span>
-                </div>
-                <div className="details-grid">
-                  <div className="detail-item"><strong>Property Type:</strong> {selectedProperty.propertyType}</div>
-                  <div className="detail-item"><strong>Status:</strong> <span className={`status-badge ${selectedProperty.status}`}>{selectedProperty.status}</span></div>
-                  <div className="detail-item"><strong>Bedrooms:</strong> {selectedProperty.details?.bedrooms}</div>
-                  <div className="detail-item"><strong>Bathrooms:</strong> {selectedProperty.details?.bathrooms}</div>
-                  <div className="detail-item"><strong>Area:</strong> {selectedProperty.details?.area?.size || selectedProperty.details?.area} {selectedProperty.details?.area?.unit || 'sq ft'}</div>
-                  <div className="detail-item"><strong>Year Built:</strong> {selectedProperty.details?.yearBuilt}</div>
-                  <div className="detail-item"><strong>Parking:</strong> {selectedProperty.details?.parking || 'None'}</div>
-                  <div className="detail-item"><strong>Views:</strong> {selectedProperty.views || 0}</div>
-                  <div className="detail-item"><strong>Listed Date:</strong> {new Date(selectedProperty.createdAt).toLocaleDateString()}</div>
-                </div>
-                <div className="address-section">
-                  <h4>Location</h4>
-                  <p>{selectedProperty.location?.address?.street}, {selectedProperty.location?.address?.city}, {selectedProperty.location?.address?.state} {selectedProperty.location?.address?.zipCode}</p>
-                </div>
-                <div className="description-section">
-                  <h4>Description</h4>
-                  <p>{selectedProperty.description}</p>
-                </div>
-                <div className="amenities-section">
-                  <h4>Amenities</h4>
-                  <div className="amenities-list">
-                    {selectedProperty.amenities?.map((amenity, index) => (
-                      <span key={index} className="amenity-tag">{amenity}</span>
-                    ))}
-                  </div>
-                </div>
-                <div className="owner-section">
-                  <h4>Owner Information</h4>
-                  <p>
-                    <strong>Name:</strong> {selectedProperty.ownerId?.userId?.name || 'Unknown'}<br />
-                    <strong>Email:</strong> {selectedProperty.ownerId?.userId?.email || 'Unknown'}<br />
-                    <strong>Phone:</strong> {selectedProperty.ownerId?.userId?.phone || 'Unknown'}
-                  </p>
-                </div>
-                <div className="action-buttons modal-actions">
-                  {selectedProperty.status === 'pending' && (
-                    <>
-                      <button onClick={() => handlePropertyAction(selectedProperty._id, 'approve')} className="btn-approve">Approve Property</button>
-                      <button onClick={() => { const reason = prompt('Enter rejection reason:'); if (reason) handlePropertyAction(selectedProperty._id, 'reject', reason); }} className="btn-reject">Reject Property</button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      
+      <div className="dashboard-content">
+        <nav className="dashboard-nav">
+          <ul>
+            <li>
+              <button 
+                className={activeTab === 'dashboard' ? 'active' : ''}
+                onClick={() => setActiveTab('dashboard')}
+              >
+                Dashboard
+              </button>
+            </li>
+            <li>
+              <button 
+                className={activeTab === 'allProperties' ? 'active' : ''}
+                onClick={() => setActiveTab('allProperties')}
+              >
+                All Properties
+              </button>
+            </li>
+            <li>
+              <button 
+                className={activeTab === 'reports' ? 'active' : ''}
+                onClick={() => setActiveTab('reports')}
+              >
+                Reports
+              </button>
+            </li>
+            <li>
+              <button 
+                className={activeTab === 'profile' ? 'active' : ''}
+                onClick={() => setActiveTab('profile')}
+              >
+                Profile
+              </button>
+            </li>
+          </ul>
+        </nav>
+        
+        <main className="tab-content">
+          {activeTab === 'dashboard' && renderDashboardTab()}
+          {activeTab === 'allProperties' && renderAllPropertiesTab()}
+          {activeTab === 'reports' && renderReportsTab()}
+          {activeTab === 'profile' && renderProfileTab()}
+        </main>
+      </div>
+      
+      {showPropertyModal && renderPropertyModal()}
     </div>
   );
 };

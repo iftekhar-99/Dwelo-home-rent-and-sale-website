@@ -15,15 +15,27 @@ api.interceptors.request.use(
     const token = localStorage.getItem('token');
     const adminToken = localStorage.getItem('adminToken');
     const ownerToken = localStorage.getItem('ownerToken');
-    
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    } else if (adminToken) {
-      config.headers.Authorization = `Bearer ${adminToken}`;
-    } else if (ownerToken) {
-      config.headers.Authorization = `Bearer ${ownerToken}`;
+
+    const currentPath = window.location.pathname || '';
+    const url = (config?.url || '').toString();
+
+    const isOwnerContext = currentPath.startsWith('/owner') || url.startsWith('/api/owner');
+    const isAdminContext = currentPath.startsWith('/admin') || url.startsWith('/api/admin');
+
+    if (isOwnerContext) {
+      if (ownerToken) config.headers.Authorization = `Bearer ${ownerToken}`;
+      else if (token) config.headers.Authorization = `Bearer ${token}`;
+      else if (adminToken) config.headers.Authorization = `Bearer ${adminToken}`;
+    } else if (isAdminContext) {
+      if (adminToken) config.headers.Authorization = `Bearer ${adminToken}`;
+      else if (token) config.headers.Authorization = `Bearer ${token}`;
+      else if (ownerToken) config.headers.Authorization = `Bearer ${ownerToken}`;
+    } else {
+      if (token) config.headers.Authorization = `Bearer ${token}`;
+      else if (adminToken) config.headers.Authorization = `Bearer ${adminToken}`;
+      else if (ownerToken) config.headers.Authorization = `Bearer ${ownerToken}`;
     }
-    
+
     return config;
   },
   (error) => {
@@ -79,12 +91,22 @@ export const fetchWithAuth = async (endpoint, options = {}) => {
     headers['Content-Type'] = 'application/json';
   }
   
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  } else if (adminToken) {
-    headers.Authorization = `Bearer ${adminToken}`;
-  } else if (ownerToken) {
-    headers.Authorization = `Bearer ${ownerToken}`;
+  const currentPath = window.location.pathname || '';
+  const isOwnerContext = currentPath.startsWith('/owner') || endpoint.startsWith('/api/owner');
+  const isAdminContext = currentPath.startsWith('/admin') || endpoint.startsWith('/api/admin');
+
+  if (isOwnerContext) {
+    if (ownerToken) headers.Authorization = `Bearer ${ownerToken}`;
+    else if (token) headers.Authorization = `Bearer ${token}`;
+    else if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+  } else if (isAdminContext) {
+    if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+    else if (token) headers.Authorization = `Bearer ${token}`;
+    else if (ownerToken) headers.Authorization = `Bearer ${ownerToken}`;
+  } else {
+    if (token) headers.Authorization = `Bearer ${token}`;
+    else if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+    else if (ownerToken) headers.Authorization = `Bearer ${ownerToken}`;
   }
   
   return fetch(url, {

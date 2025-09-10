@@ -48,9 +48,15 @@ const EditProperty = () => {
   const fetchPropertyDetails = async () => {
     try {
       console.log('[EditProperty] Fetching property with ID:', id);
+      console.log('[EditProperty] API Base URL:', import.meta.env.VITE_API_URL);
       
       const response = await fetchWithAuth(`/api/owner/properties/${id}`);
       console.log('[EditProperty] Response status:', response.status);
+      console.log('[EditProperty] Response headers:', response.headers);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
 
       const data = await response.json();
       console.log('[EditProperty] Response data:', data);
@@ -271,6 +277,8 @@ const EditProperty = () => {
 
       const updateUrl = `/api/owner/properties/${id}`;
       console.log('[EditProperty] Submitting update to', updateUrl, 'payload:', propertyData);
+      console.log('[EditProperty] API Base URL:', import.meta.env.VITE_API_URL);
+      
       const propertyResponse = await fetchWithAuth(updateUrl, {
         method: 'PUT',
         headers: {
@@ -278,6 +286,15 @@ const EditProperty = () => {
         },
         body: JSON.stringify(propertyData)
       });
+      
+      console.log('[EditProperty] Update response status:', propertyResponse.status);
+      console.log('[EditProperty] Update response headers:', propertyResponse.headers);
+      
+      if (!propertyResponse.ok) {
+        const errorText = await propertyResponse.text();
+        console.error('[EditProperty] Update failed:', propertyResponse.status, errorText);
+        throw new Error(`HTTP ${propertyResponse.status}: ${propertyResponse.statusText} - ${errorText}`);
+      }
 
 
 

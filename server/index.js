@@ -105,6 +105,11 @@ app.get('/api', (req, res) => {
 // 404 handler for undefined routes
 app.use(notFound);
 
+// Basic route for the root URL
+app.get('/', (req, res) => {
+    res.send('Dwelo Backend API is running!');
+});
+
 // Global error handling middleware (must be last)
 app.use(errorHandler);
 

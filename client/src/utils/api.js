@@ -47,7 +47,9 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Only redirect on 401 errors from axios requests, not fetch requests
+    if (error.response?.status === 401 && error.config) {
+      console.log('401 error detected, clearing tokens and redirecting');
       // Clear tokens and redirect to login
       localStorage.removeItem('token');
       localStorage.removeItem('adminToken');
@@ -96,9 +98,18 @@ export const fetchWithAuth = async (endpoint, options = {}) => {
   const isAdminContext = currentPath.startsWith('/admin') || endpoint.startsWith('/api/admin');
 
   if (isOwnerContext) {
-    if (ownerToken) headers.Authorization = `Bearer ${ownerToken}`;
-    else if (token) headers.Authorization = `Bearer ${token}`;
-    else if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+    if (ownerToken) {
+      headers.Authorization = `Bearer ${ownerToken}`;
+      console.log('[fetchWithAuth] Using ownerToken for owner context');
+    } else if (token) {
+      headers.Authorization = `Bearer ${token}`;
+      console.log('[fetchWithAuth] Using token for owner context');
+    } else if (adminToken) {
+      headers.Authorization = `Bearer ${adminToken}`;
+      console.log('[fetchWithAuth] Using adminToken for owner context');
+    } else {
+      console.log('[fetchWithAuth] No token available for owner context');
+    }
   } else if (isAdminContext) {
     if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
     else if (token) headers.Authorization = `Bearer ${token}`;

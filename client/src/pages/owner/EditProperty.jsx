@@ -203,8 +203,12 @@ const EditProperty = () => {
     
     try {
       const ownerToken = localStorage.getItem('ownerToken');
+      console.log('[EditProperty] Owner token check:', ownerToken ? 'Token exists' : 'No token found');
       if (!ownerToken) {
-        navigate('/owner/login');
+        setErrors(prev => ({
+          ...prev,
+          submit: 'Please log in to update the property.'
+        }));
         return;
       }
       
@@ -270,6 +274,12 @@ const EditProperty = () => {
         },
         body: JSON.stringify(propertyData)
       });
+
+      // Handle 401 errors specifically without automatic redirect
+      if (propertyResponse.status === 401) {
+        const errorData = await propertyResponse.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Authentication failed. Please log in again.');
+      }
 
       // Read raw response for robust diagnostics
       const status = propertyResponse.status;

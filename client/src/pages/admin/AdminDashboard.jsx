@@ -9,6 +9,7 @@ const AdminDashboard = () => {
   // Removed update requests (owner edits now apply immediately)
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [pendingReports, setPendingReports] = useState([]);
+      const [allProperties, setAllProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   // Single list for new property approvals only
@@ -32,8 +33,12 @@ const AdminDashboard = () => {
       const headers = { Authorization: `Bearer ${token}` };
       const metricsResponse = await axios.get('/api/admin/dashboard', { headers });
       setMetrics(metricsResponse.data.data);
-      const propertiesResponse = await axios.get('/api/admin/properties/pending', { headers });
-      setPendingProperties(propertiesResponse.data.data.properties);
+
+      const pendingPropertiesResponse = await axios.get('/api/admin/properties/pending', { headers });
+      setPendingProperties(pendingPropertiesResponse.data.data.properties);
+
+      const allPropertiesResponse = await axios.get('/api/admin/properties/all', { headers });
+      setAllProperties(allPropertiesResponse.data.data.properties);
       // Update requests removed
       const reportsResponse = await axios.get('/api/admin/reports/pending', { headers });
       setPendingReports(reportsResponse.data.data.reports);
@@ -107,16 +112,44 @@ const AdminDashboard = () => {
         </div>
       </header>
 
-      <nav className="admin-nav">
-        <div className="admin-nav-content">
-          <button className={`nav-btn ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>Dashboard</button>
-          <button className={`nav-btn ${activeTab === 'properties' ? 'active' : ''}`} onClick={() => setActiveTab('properties')}>
-            Property Requests ({pendingProperties.length})
-          </button>
-          <button className={`nav-btn ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
-            Review Reports ({pendingReports.length})
-          </button>
-          <button className={`nav-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Profile Settings</button>
+      {/* NEW: Rebuilt and renamed admin navigation (topbar) */}
+      <nav className="admin-topbar" role="navigation" aria-label="Admin primary">
+        <div className="admin-topbar-inner">
+          <div className="topbar-group">
+            <button
+              type="button"
+              className={`topbar-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+              onClick={() => setActiveTab('dashboard')}
+            >
+              Dashboard
+            </button>
+
+
+
+            <button
+              type="button"
+              className={`topbar-item ${activeTab === 'allProperties' ? 'active' : ''}`}
+              onClick={() => setActiveTab('allProperties')}
+            >
+              All Properties
+            </button>
+
+            <button
+              type="button"
+              className={`topbar-item ${activeTab === 'reports' ? 'active' : ''}`}
+              onClick={() => setActiveTab('reports')}
+            >
+              Reports{pendingReports?.length ? ` (${pendingReports.length})` : ''}
+            </button>
+
+            <button
+              type="button"
+              className={`topbar-item ${activeTab === 'profile' ? 'active' : ''}`}
+              onClick={() => setActiveTab('profile')}
+            >
+              Profile
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -164,11 +197,15 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {activeTab === 'properties' && (
+
+
+
+
+        {activeTab === 'allProperties' && (
           <div className="properties-content">
-            <h2>Property Approval Requests</h2>
-            {pendingProperties.length === 0 ? (
-              <p>No pending properties to review.</p>
+            <h2>All Properties</h2>
+            {allProperties.length === 0 ? (
+              <p>No properties available.</p>
             ) : (
               <div className="properties-table">
                 <table>
@@ -183,10 +220,10 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {pendingProperties.map(property => (
+                    {allProperties.map(property => (
                       <tr key={property._id}>
                         <td>{property.title}</td>
-                        <td>{property.ownerId?.name}</td>
+                        <td>{property.ownerId?.userId?.name || 'Unknown'}</td>
                         <td>{property.propertyType}</td>
                         <td>${property.price?.toLocaleString()}</td>
                         <td>
@@ -195,11 +232,12 @@ const AdminDashboard = () => {
                         <td>
                           <div className="action-buttons">
                             <button onClick={() => viewPropertyDetails(property)} className="btn-view">View Details</button>
-                            <button onClick={() => handlePropertyAction(property._id, 'approve')} className="btn-approve">Approve</button>
-                            <button onClick={() => {
-                              const reason = prompt('Enter rejection reason:');
-                              if (reason) handlePropertyAction(property._id, 'reject', reason);
-                            }} className="btn-reject">Reject</button>
+                            {property.status === 'pending' && (
+                              <>
+                                <button onClick={() => handlePropertyAction(property._id, 'approve')} className="btn-approve">Approve</button>
+                                <button onClick={() => { const reason = prompt('Enter rejection reason:'); if (reason) handlePropertyAction(property._id, 'reject', reason); }} className="btn-reject">Reject</button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -257,7 +295,7 @@ const AdminDashboard = () => {
           <div className="profile-content">
             <h2>Profile Settings</h2>
             <p>Profile settings functionality is available. Navigate to the Profile Settings page to update your account information.</p>
-            <button onClick={() => window.location.href = '/admin/profile'} className="btn-approve" style={{ marginTop: '1rem' }}>Go to Profile Settings</button>
+            <button onClick={() => window.location.href = '/admin/profile'} className="btn-view" style={{ marginTop: '1rem' }}>Go to Profile Settings</button>
           </div>
         )}
       </main>
@@ -279,13 +317,20 @@ const AdminDashboard = () => {
 
               <div className="property-image-large">
                 {selectedProperty.images && selectedProperty.images.length > 0 ? (
-                  <img src={
-                    typeof selectedProperty.images[0] === 'string'
-                      ? `http://localhost:5002/${selectedProperty.images[0]}`
-                      : (selectedProperty.images[0].url?.startsWith('http')
-                          ? selectedProperty.images[0].url
-                          : `http://localhost:5002/${selectedProperty.images[0].url}`)
-                  } alt={selectedProperty.title} />
+                  <div className="image-gallery">
+                    <img src={
+                      typeof selectedProperty.images[0] === 'string'
+                        ? `http://localhost:5002${selectedProperty.images[0].startsWith('/') ? selectedProperty.images[0] : '/' + selectedProperty.images[0]}`
+                        : (selectedProperty.images[0].url?.startsWith('http')
+                            ? selectedProperty.images[0].url
+                            : `http://localhost:5002${selectedProperty.images[0].url?.startsWith('/') ? selectedProperty.images[0].url : '/' + (selectedProperty.images[0].url || selectedProperty.images[0])}`)
+                    } alt={selectedProperty.title} />
+                    {selectedProperty.images.length > 1 && (
+                      <div className="image-count">
+                        +{selectedProperty.images.length - 1} more images
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <div className="placeholder-image-large">No Image Available</div>
                 )}
@@ -297,11 +342,14 @@ const AdminDashboard = () => {
                 </div>
                 <div className="details-grid">
                   <div className="detail-item"><strong>Property Type:</strong> {selectedProperty.propertyType}</div>
+                  <div className="detail-item"><strong>Status:</strong> <span className={`status-badge ${selectedProperty.status}`}>{selectedProperty.status}</span></div>
                   <div className="detail-item"><strong>Bedrooms:</strong> {selectedProperty.details?.bedrooms}</div>
                   <div className="detail-item"><strong>Bathrooms:</strong> {selectedProperty.details?.bathrooms}</div>
-                  <div className="detail-item"><strong>Area:</strong> {selectedProperty.details?.area} sq ft</div>
+                  <div className="detail-item"><strong>Area:</strong> {selectedProperty.details?.area?.size || selectedProperty.details?.area} {selectedProperty.details?.area?.unit || 'sq ft'}</div>
                   <div className="detail-item"><strong>Year Built:</strong> {selectedProperty.details?.yearBuilt}</div>
-                  <div className="detail-item"><strong>Parking:</strong> {selectedProperty.details?.parking ? 'Yes' : 'No'}</div>
+                  <div className="detail-item"><strong>Parking:</strong> {selectedProperty.details?.parking || 'None'}</div>
+                  <div className="detail-item"><strong>Views:</strong> {selectedProperty.views || 0}</div>
+                  <div className="detail-item"><strong>Listed Date:</strong> {new Date(selectedProperty.createdAt).toLocaleDateString()}</div>
                 </div>
                 <div className="address-section">
                   <h4>Location</h4>
@@ -322,16 +370,18 @@ const AdminDashboard = () => {
                 <div className="owner-section">
                   <h4>Owner Information</h4>
                   <p>
-                    <strong>Name:</strong> {selectedProperty.ownerId?.name}<br />
-                    <strong>Email:</strong> {selectedProperty.ownerId?.email}<br />
-                    <strong>Phone:</strong> {selectedProperty.ownerId?.phone}
+                    <strong>Name:</strong> {selectedProperty.ownerId?.userId?.name || 'Unknown'}<br />
+                    <strong>Email:</strong> {selectedProperty.ownerId?.userId?.email || 'Unknown'}<br />
+                    <strong>Phone:</strong> {selectedProperty.ownerId?.userId?.phone || 'Unknown'}
                   </p>
                 </div>
                 <div className="action-buttons modal-actions">
-                  <>
-                    <button onClick={() => handlePropertyAction(selectedProperty._id, 'approve')} className="btn-approve">Approve Property</button>
-                    <button onClick={() => { const reason = prompt('Enter rejection reason:'); if (reason) handlePropertyAction(selectedProperty._id, 'reject', reason); }} className="btn-reject">Reject Property</button>
-                  </>
+                  {selectedProperty.status === 'pending' && (
+                    <>
+                      <button onClick={() => handlePropertyAction(selectedProperty._id, 'approve')} className="btn-approve">Approve Property</button>
+                      <button onClick={() => { const reason = prompt('Enter rejection reason:'); if (reason) handlePropertyAction(selectedProperty._id, 'reject', reason); }} className="btn-reject">Reject Property</button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

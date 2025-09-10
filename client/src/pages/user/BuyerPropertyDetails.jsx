@@ -363,7 +363,7 @@ const BuyerPropertyDetails = () => {
               <div className="amenities-list">
                 {property.amenities.map((amenity, index) => (
                   <span key={index} className="amenity-tag">
-                    {amenity.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    {amenity.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                   </span>
                 ))}
               </div>
@@ -374,6 +374,20 @@ const BuyerPropertyDetails = () => {
             <h3>Description</h3>
             <p>{property.description}</p>
           </div>
+
+          {property.details?.yearBuilt && (
+            <div className="property-detail-item">
+              <h3>Year Built</h3>
+              <p>{property.details.yearBuilt}</p>
+            </div>
+          )}
+
+          {property.details?.parking && (
+            <div className="property-detail-item">
+              <h3>Parking</h3>
+              <p>{property.details.parking.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+            </div>
+          )}
 
           <div className="property-stats">
             <div className="stat-item">

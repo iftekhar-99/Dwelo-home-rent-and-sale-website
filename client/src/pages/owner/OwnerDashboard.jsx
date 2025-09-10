@@ -150,12 +150,23 @@ const OwnerDashboard = () => {
         </div>
         
         <nav className="sidebar-nav">
-          {sidebarLinks.map((link, index) => (
-            <Link key={index} to={link.path} className="nav-link">
-              {link.icon}
-              <span>{link.text}</span>
-            </Link>
-          ))}
+          {sidebarLinks.map((link, index) => {
+            // Make Analytics non-functional, but enable Profile
+            if (link.text === 'Analytics') {
+              return (
+                <div key={index} className="nav-link nav-link-disabled" title="Coming Soon">
+                  {link.icon}
+                  <span>{link.text}</span>
+                </div>
+              );
+            }
+            return (
+              <Link key={index} to={link.path} className="nav-link">
+                {link.icon}
+                <span>{link.text}</span>
+              </Link>
+            );
+          })}
           <button className="nav-link logout-button" onClick={handleLogout}>
             <FaSignOutAlt />
             <span>Logout</span>

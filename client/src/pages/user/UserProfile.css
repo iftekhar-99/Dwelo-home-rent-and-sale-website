@@ -8,6 +8,145 @@
   color: #ffffff;
 }
 
+.profile-section {
+  /* max-width: 1200px; */
+  margin: 0;
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.profile-header h2 {
+  font-size: 2rem;
+  color: #333;
+  margin: 0;
+}
+
+.edit-profile-btn {
+  background-color: #007bff;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.edit-profile-btn:hover {
+  background-color: #0056b3;
+}
+
+.profile-info .info-group {
+  display: flex;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.profile-info .info-label {
+  font-weight: bold;
+  color: #555;
+  width: 120px; /* Fixed width for labels */
+  flex-shrink: 0;
+}
+
+.profile-info .info-value {
+  color: #333;
+  flex-grow: 1;
+}
+
+.profile-edit-form .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.profile-edit-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #555;
+}
+
+.profile-edit-form input[type="text"],
+.profile-edit-form input[type="email"],
+.profile-edit-form input[type="tel"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+  box-sizing: border-box; /* Include padding in width */
+}
+
+.profile-edit-form input[type="email"]:disabled {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
+}
+
+.save-profile-btn {
+  background-color: #28a745;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.save-profile-btn:hover {
+  background-color: #218838;
+}
+
+.profile-loading,
+.profile-error,
+.profile-no-data {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.profile-error {
+  color: #dc3545;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .profile-section {
+    margin: 0;
+    padding: 1.5rem;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-header h2 {
+    margin-bottom: 1rem;
+  }
+
+  .profile-info .info-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-info .info-label {
+    width: auto;
+    margin-bottom: 0.25rem;
+  }
+}
+
 .profile-header {
   display: flex;
   align-items: center;

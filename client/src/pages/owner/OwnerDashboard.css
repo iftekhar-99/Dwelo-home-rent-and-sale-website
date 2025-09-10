@@ -59,6 +59,17 @@
   color: #fff;
 }
 
+.nav-link-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.nav-link-disabled:hover {
+  background: transparent;
+  color: #cbd5e1;
+}
+
 .dashboard-content {
   display: flex;
   flex-direction: column;

@@ -215,6 +215,48 @@ export const getDashboardMetrics = async (req, res) => {
   }
 };
 
+export const getAllProperties = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
+    const properties = await Property.find({})
+      .populate({
+        path: 'ownerId',
+        populate: {
+          path: 'userId',
+          select: 'name email phone'
+        }
+      })
+      .populate('approvalDetails.approvedBy', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Property.countDocuments({});
+
+    res.json({
+      success: true,
+      data: {
+        properties,
+        pagination: {
+          current: parseInt(page),
+          total: Math.ceil(total / limit),
+          hasNext: page * limit < total,
+          hasPrev: page > 1
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get all properties error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch all properties'
+    });
+  }
+};
+
 // Get pending properties
 export const getPendingProperties = async (req, res) => {
   try {
@@ -222,7 +264,13 @@ export const getPendingProperties = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const properties = await Property.find({ status })
-      .populate('ownerId', 'name email phone')
+      .populate({
+        path: 'ownerId',
+        populate: {
+          path: 'userId',
+          select: 'name email phone'
+        }
+      })
       .populate('approvalDetails.approvedBy', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -566,7 +614,7 @@ export const handleReport = async (req, res) => {
     if (admin) {
       await admin.addActivityLog({
         action: `report_${action}`,
-        target: 'report',
+        target: 'system',
         targetId: report._id,
         details: `Handled report: ${action}`,
         ipAddress: req.ip,

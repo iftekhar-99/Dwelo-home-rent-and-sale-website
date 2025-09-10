@@ -170,7 +170,7 @@ const Wishlist = () => {
               <div className="empty-icon">💔</div>
               <h3>Your wishlist is empty</h3>
               <p>Save properties you like to view them later</p>
-              <Link to="/properties" className="browse-properties-btn">
+              <Link to={user?.role === 'buyer' ? '/buyer/dashboard' : '/renter/dashboard'} className="browse-properties-btn">
                 Browse Properties
               </Link>
             </div>

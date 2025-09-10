@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './UserProfile.css'; // Assuming you'll create this file for styling
 
 const UserProfile = () => {
   const [user, setUser] = useState(null);
@@ -10,19 +11,45 @@ const UserProfile = () => {
     preferences: ''
   });
   const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const parsedUser = JSON.parse(userData);
-      setUser(parsedUser);
-      setProfileData({
-        name: parsedUser.name || '',
-        email: parsedUser.email || '',
-        phone: parsedUser.phone || '',
-        preferences: parsedUser.preferences || ''
-      });
-    }
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          // Handle unauthenticated user, e.g., redirect to login
+          setError('User not authenticated.');
+          setLoading(false);
+          return;
+        }
+
+        const response = await axios.get('/api/auth/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (response.data.success) {
+          const fetchedUser = response.data.data.user;
+          const fetchedRoleData = response.data.data.roleData;
+          setUser(fetchedUser);
+          setProfileData({
+            name: fetchedUser.name || '',
+            email: fetchedUser.email || '',
+            phone: fetchedUser.phone || '',
+          });
+        } else {
+          setError(response.data.message || 'Failed to fetch profile.');
+        }
+      } catch (err) {
+        console.error('Error fetching user profile:', err);
+        setError('Failed to fetch profile. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
   }, []);
 
   const toggleProfileEdit = () => {
@@ -39,27 +66,57 @@ const UserProfile = () => {
 
   const saveProfile = async () => {
     try {
-      // In a real application, you would send this data to the server
-      // For now, we'll just update the local storage
-      const updatedUser = {
-        ...user,
+      const token = localStorage.getItem('token');
+      // Only send name and phone for update, as email and role are not editable via this form
+      const updateData = {
         name: profileData.name,
-        phone: profileData.phone,
-        preferences: profileData.preferences
+        phone: profileData.phone
       };
-      
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      setUser(updatedUser);
-      setShowProfileEdit(false);
-      alert('Profile updated successfully!');
+      const response = await axios.put('/api/auth/profile', updateData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        const updatedUser = response.data.data.user;
+        // Update local storage and state with the new user data
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setUser(updatedUser);
+        // Re-fetch profile data to get updated roleData if needed (e.g., preferences)
+        // This is a simple approach; for complex scenarios, consider more granular state updates
+        const updatedProfileResponse = await axios.get('/api/auth/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (updatedProfileResponse.data.success) {
+          const fetchedUser = updatedProfileResponse.data.data.user;
+          const fetchedRoleData = updatedProfileResponse.data.data.roleData;
+          setProfileData({
+            name: fetchedUser.name || '',
+            email: fetchedUser.email || '',
+            phone: fetchedUser.phone || '',
+            preferences: fetchedRoleData && fetchedRoleData.preferences ? fetchedRoleData.preferences : {}
+          });
+        }
+        setShowProfileEdit(false);
+        alert('Profile updated successfully!');
+      } else {
+        alert(response.data.message || 'Failed to update profile.');
+      }
     } catch (error) {
       console.error('Error updating profile:', error);
       alert('Failed to update profile. Please try again.');
     }
   };
 
+  if (loading) {
+    return <div className="profile-loading">Loading profile...</div>;
+  }
+
+  if (error) {
+    return <div className="profile-error">Error: {error}</div>;
+  }
+
   if (!user) {
-    return <div>Loading profile...</div>;
+    return <div className="profile-no-data">No user profile data available.</div>;
   }
 
   return (
@@ -108,7 +165,22 @@ const UserProfile = () => {
               onChange={handleProfileChange} 
             />
           </div>
-          
+
+          {/* Display preferences for editing if applicable */}
+          {user.role === 'buyer' && (
+            <div className="form-group">
+              <label htmlFor="preferences">Preferences (e.g., Budget, Property Type)</label>
+              <textarea
+                id="preferences"
+                name="preferences"
+                value={JSON.stringify(profileData.preferences, null, 2)}
+                onChange={handleProfileChange}
+                rows="5"
+                disabled // For now, disable direct editing of complex preferences
+              ></textarea>
+            </div>
+          )}
+
           <button className="save-profile-btn" onClick={saveProfile}>Save Profile</button>
         </div>
       ) : (
@@ -127,11 +199,26 @@ const UserProfile = () => {
             <span className="info-label">Phone:</span>
             <span className="info-value">{user.phone || 'Not provided'}</span>
           </div>
-          
+
           <div className="info-group">
             <span className="info-label">Role:</span>
             <span className="info-value">{user.role}</span>
           </div>
+
+          {/* Display preferences if user is a buyer */}
+          {user.role === 'buyer' && profileData.preferences && (
+            <div className="info-group">
+              <span className="info-label">Preferences:</span>
+              <span className="info-value">
+                {profileData.preferences.budget && `Budget: $${profileData.preferences.budget.min} - $${profileData.preferences.budget.max}, `}
+                {profileData.preferences.propertyType && `Property Type: ${profileData.preferences.propertyType.join(', ')}, `}
+                {profileData.preferences.bedrooms && `Bedrooms: ${profileData.preferences.bedrooms.min}-${profileData.preferences.bedrooms.max}, `}
+                {profileData.preferences.bathrooms && `Bathrooms: ${profileData.preferences.bathrooms.min}-${profileData.preferences.bathrooms.max}, `}
+                {profileData.preferences.location && `Location: ${profileData.preferences.location.city}, ${profileData.preferences.location.state}, `}
+                {profileData.preferences.amenities && `Amenities: ${profileData.preferences.amenities.join(', ')}`}
+              </span>
+            </div>
+          )}
         </div>
       )}
     </section>

@@ -118,10 +118,17 @@ const UserDashboard = () => {
           return (
             (property.title && property.title.toLowerCase().includes(searchLower)) ||
             (property.description && property.description.toLowerCase().includes(searchLower)) ||
-            (property.location?.address && property.location.address.toLowerCase().includes(searchLower)) ||
-            (property.location?.city && property.location.city.toLowerCase().includes(searchLower)) ||
-            (property.location?.state && property.location.state.toLowerCase().includes(searchLower)) ||
-            (property.propertyType && property.propertyType.toLowerCase().includes(searchLower))
+            (property.location?.address?.street && property.location.address.street.toLowerCase().includes(searchLower)) ||
+            (property.location?.address?.city && property.location.address.city.toLowerCase().includes(searchLower)) ||
+            (property.location?.address?.state && property.location.address.state.toLowerCase().includes(searchLower)) ||
+            (property.location?.address?.zipCode && property.location.address.zipCode.toLowerCase().includes(searchLower)) ||
+            (property.propertyType && property.propertyType.toLowerCase().includes(searchLower)) ||
+            (property.listingType && property.listingType.toLowerCase().includes(searchLower)) ||
+            (property.details?.area?.size && property.details.area.size.toString().includes(searchLower)) ||
+            (property.details?.bedrooms && property.details.bedrooms.toString().includes(searchLower)) ||
+            (property.details?.bathrooms && property.details.bathrooms.toString().includes(searchLower)) ||
+            (property.amenities && property.amenities.some(amenity => amenity.toLowerCase().includes(searchLower))) ||
+            (property.price && property.price.toString().includes(searchLower))
           );
         } catch (error) {
           console.error('Error filtering property:', property, error);
@@ -431,22 +438,34 @@ const UserDashboard = () => {
                 <div key={property._id} className="property-card">
                   <div className="property-image">
                     {property.images && property.images.length > 0 ? (
-                      <img src={`http://localhost:5002${property.images[0].url}`} alt={property.title} />
+                      <img 
+                        src={property.images[0].url.startsWith('http') ? property.images[0].url : `http://localhost:5002${property.images[0].url}`} 
+                        alt={property.title}
+                        onError={(e) => {
+                          console.log('Image failed to load:', e.target.src);
+                          e.target.src = '/placeholder-property.jpg';
+                        }}
+                      />
                     ) : (
                       <div className="placeholder-image">No Image Available</div>
                     )}
-                    <div className="property-type-badge">{property.listingType}</div>
+                    <div className="status-badge status-approved">Available</div>
                   </div>
                   <div className="property-info">
                     <h3 className="property-title">{property.title}</h3>
-                    <div className="property-price">${property.price?.toLocaleString()}</div>
-                    <div className="property-location">
+                    <div className="property-address">
+                      {property.location?.address?.street && `${property.location.address.street}, `}
                       {property.location?.address?.city}, {property.location?.address?.state}
                     </div>
                     <div className="property-details">
-                      <span>{property.details?.bedrooms} Beds</span>
-                      <span>{property.details?.bathrooms} Baths</span>
-                      <span>{property.details?.area?.size} sq ft</span>
+                      <span>{property.details?.bedrooms || 'N/A'} Beds</span>
+                      <span>{property.details?.bathrooms || 'N/A'} Baths</span>
+                      <span>{property.details?.area?.size || 'N/A'} sq ft</span>
+                    </div>
+                    <div className="property-price">${property.price?.toLocaleString() || 'N/A'}</div>
+                    <div className="property-stats">
+                      <span>👁 {property.views || 0} views</span>
+                      <span>❤ {property.favorites || 0} favorites</span>
                     </div>
                     <button 
                       onClick={() => viewPropertyDetails(property)}

@@ -20,6 +20,7 @@ import CreateProperty from "./pages/owner/CreateProperty";
 import EditProperty from "./pages/owner/EditProperty";
 import MyProperties from "./pages/owner/MyProperties";
 import MyListings from "./pages/owner/MyListings";
+import OwnerProfile from "./pages/owner/OwnerProfile";
 
 // User (buyer / renter share same pages)
 import UserDashboard from "./pages/user/UserDashboard";
@@ -56,6 +57,7 @@ function App() {
           <Route path="/owner/property/:id" element={<PropertyDetails />} />
           <Route path="/owner/properties" element={<MyProperties />} />
           <Route path="/owner/listings" element={<MyListings />} />
+          <Route path="/owner/profile" element={<OwnerProfile />} />
 
           {/* Buyer */}
           <Route path="/buyer/dashboard" element={<UserDashboard />} />

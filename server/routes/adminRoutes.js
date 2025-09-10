@@ -4,6 +4,7 @@ import {
   getDashboardMetrics,
   getPendingProperties,
   approveProperty,
+  getAllProperties,
   getPendingReports,
   getPendingPropertyUpdateRequests,
   handlePropertyUpdateRequest,
@@ -62,6 +63,13 @@ router.get('/requests/property-update/pending',
   adminRateLimit,
   adminActivityLog('view_pending_property_update_requests', 'property_update_request'),
   asyncHandler(getPendingPropertyUpdateRequests)
+);
+
+router.get('/properties/all',
+  requirePropertyManagement,
+  adminRateLimit,
+  adminActivityLog('view_all_properties', 'property'),
+  asyncHandler(getAllProperties)
 );
 
 router.put('/requests/:requestId/handle-property-update',

@@ -439,39 +439,45 @@ const CreateProperty = () => {
 
   return (
     <div className="create-property">
-      <form onSubmit={handleSubmit}>
-        <div className="step-indicator">
+      <div className="property-form-container">
+        <div className="form-header">
           <h2>Create New Property</h2>
-          <p>Step {currentStep} of 3</p>
+          <p>Step {currentStep} of 3 - Fill in the details below</p>
+        </div>
+        
+        <div className="progress-bar">
+          <div className="progress-fill" style={{ width: `${(currentStep / 3) * 100}%` }}></div>
         </div>
 
-        {/* Render different steps based on currentStep */}
-        {currentStep === 1 && renderStep1()}
-        {currentStep === 2 && renderStep2()}
-        {currentStep === 3 && renderStep3()}
+        <form onSubmit={handleSubmit}>
+          {/* Render different steps based on currentStep */}
+          {currentStep === 1 && renderStep1()}
+          {currentStep === 2 && renderStep2()}
+          {currentStep === 3 && renderStep3()}
 
-        {/* Form actions */}
-        <div className="form-actions">
-          {currentStep > 1 && (
-            <button type="button" onClick={prevStep} className="btn-secondary">
-              Previous
-            </button>
-          )}
-          {currentStep < 3 ? (
-            <button type="button" onClick={nextStep} className="btn-primary">
-              Next
-            </button>
-          ) : (
-            <button type="submit" disabled={isSubmitting} className="btn-primary">
-              {isSubmitting ? 'Creating Property...' : 'Create Property'}
-            </button>
-          )}
-        </div>
+          {/* Form actions */}
+          <div className="form-actions">
+            {currentStep > 1 && (
+              <button type="button" onClick={prevStep} className="btn-secondary">
+                Previous
+              </button>
+            )}
+            {currentStep < 3 ? (
+              <button type="button" onClick={nextStep} className="btn-primary">
+                Next
+              </button>
+            ) : (
+              <button type="submit" disabled={isSubmitting} className="btn-primary">
+                {isSubmitting ? 'Creating Property...' : 'Create Property'}
+              </button>
+            )}
+          </div>
 
-        {errors.submit && (
-          <div className="error-message">{errors.submit}</div>
-        )}
-      </form>
+          {errors.submit && (
+            <div className="error-message">{errors.submit}</div>
+          )}
+        </form>
+      </div>
     </div>
   );
 };

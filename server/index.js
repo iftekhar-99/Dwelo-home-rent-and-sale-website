@@ -107,6 +107,11 @@ app.get('/', (req, res) => {
     res.send('Dwelo Backend API is running!');
 });
 
+// Handle favicon.ico requests
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end(); // Respond with No Content
+});
+
 // 404 handler for undefined routes
 app.use(notFound);
 

@@ -48,17 +48,12 @@ const EditProperty = () => {
   const fetchPropertyDetails = async () => {
     try {
       console.log('[EditProperty] Fetching property with ID:', id);
-      const anyToken = localStorage.getItem('ownerToken') || localStorage.getItem('token') || localStorage.getItem('adminToken');
-      console.log('[EditProperty] Owner token available:', !!anyToken);
       
-      if (!anyToken) {
-        navigate('/owner/login');
-        return;
-      }
-
       const response = await fetchWithAuth(`/api/owner/properties/${id}`);
+      console.log('[EditProperty] Response status:', response.status);
 
       const data = await response.json();
+      console.log('[EditProperty] Response data:', data);
       
       console.log('[EditProperty] Fetch response:', response.status, data);
 
@@ -220,17 +215,6 @@ const EditProperty = () => {
     setIsSubmitting(true);
     
     try {
-      const ownerToken = localStorage.getItem('ownerToken');
-      console.log('[EditProperty] Owner token check:', ownerToken ? 'Token exists' : 'No token found');
-      if (!ownerToken) {
-        console.log('[EditProperty] No owner token found, setting error');
-        setErrors(prev => ({
-          ...prev,
-          submit: 'Please log in to update the property.'
-        }));
-        setIsSubmitting(false);
-        return;
-      }
       
       // First, upload any new images if they exist
       let imageUrls = originalImages; // Default to original images
@@ -295,11 +279,7 @@ const EditProperty = () => {
         body: JSON.stringify(propertyData)
       });
 
-      // Handle 401 errors specifically without automatic redirect
-      if (propertyResponse.status === 401) {
-        const errorData = await propertyResponse.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Authentication failed. Please log in again.');
-      }
+
 
       // Read raw response for robust diagnostics
       const status = propertyResponse.status;

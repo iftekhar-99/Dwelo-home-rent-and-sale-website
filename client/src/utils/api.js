@@ -120,8 +120,32 @@ export const fetchWithAuth = async (endpoint, options = {}) => {
     else if (ownerToken) headers.Authorization = `Bearer ${ownerToken}`;
   }
   
-  return fetch(url, {
+  const response = await fetch(url, {
     ...options,
     headers,
   });
+  
+  // Handle 401 responses for fetch requests
+  if (response.status === 401) {
+    console.log('401 error detected in fetch, clearing tokens and redirecting');
+    // Clear tokens and redirect to login
+    localStorage.removeItem('token');
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('ownerToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('admin');
+    localStorage.removeItem('owner');
+    
+    // Redirect to appropriate login page
+    const currentPath = window.location.pathname;
+    if (currentPath.startsWith('/admin')) {
+      window.location.href = '/admin/login';
+    } else if (currentPath.startsWith('/owner')) {
+      window.location.href = '/owner/login';
+    } else {
+      window.location.href = '/login';
+    }
+  }
+  
+  return response;
 };

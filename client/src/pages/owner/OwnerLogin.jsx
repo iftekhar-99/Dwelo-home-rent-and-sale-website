@@ -27,7 +27,7 @@ const OwnerLogin = () => {
     setError('');
 
     try {
-      const response = await api.post('/api/owners/login', formData);
+      const response = await api.post('/api/owner/login', formData);
       
       if (response.data.success) {
         // Store owner data and token

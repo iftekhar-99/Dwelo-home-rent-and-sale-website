@@ -21,6 +21,7 @@ import EditProperty from "./pages/owner/EditProperty";
 import MyProperties from "./pages/owner/MyProperties";
 import MyListings from "./pages/owner/MyListings";
 import OwnerProfile from "./pages/owner/OwnerProfile";
+import OwnerPropertyDetails from "./pages/owner/OwnerPropertyDetails";
 
 // User (buyer / renter share same pages)
 import UserDashboard from "./pages/user/UserDashboard";
@@ -54,7 +55,7 @@ function App() {
           <Route path="/owner/requests" element={<OwnerRequests />} />
           <Route path="/owner/create-property" element={<CreateProperty />} />
           <Route path="/owner/edit-property/:id" element={<EditProperty />} />
-          <Route path="/owner/property/:id" element={<PropertyDetails />} />
+          <Route path="/owner/property/:id" element={<OwnerPropertyDetails />} />
           <Route path="/owner/properties" element={<MyProperties />} />
           <Route path="/owner/listings" element={<MyListings />} />
           <Route path="/owner/profile" element={<OwnerProfile />} />

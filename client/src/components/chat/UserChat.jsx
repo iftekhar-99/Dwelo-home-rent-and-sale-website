@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaArrowLeft, FaPaperPlane, FaSpinner } from 'react-icons/fa';
+import { fetchWithAuth } from '../../utils/api';
 import './UserChat.css';
 
 const UserChat = ({ chatId, propertyId, recipientId, onClose }) => {
@@ -31,12 +32,7 @@ const UserChat = ({ chatId, propertyId, recipientId, onClose }) => {
   const fetchChat = async (id) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/chats/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetchWithAuth(`/api/chats/${id}`);
       
       const data = await response.json();
       if (response.ok && data.success) {
@@ -55,13 +51,8 @@ const UserChat = ({ chatId, propertyId, recipientId, onClose }) => {
   const startNewChat = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/chats/start', {
+      const response = await fetchWithAuth('/api/chats/start', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify({
           recipientId,
           propertyId
@@ -88,13 +79,8 @@ const UserChat = ({ chatId, propertyId, recipientId, onClose }) => {
     
     setSending(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/chats/message', {
+      const response = await fetchWithAuth('/api/chats/message', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify({
             chatId: chat._id,
           content: message

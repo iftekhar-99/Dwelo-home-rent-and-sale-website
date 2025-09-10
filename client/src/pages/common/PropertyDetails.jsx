@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FaArrowLeft, FaEdit, FaTrash, FaEye, FaHeart } from 'react-icons/fa';
+import { fetchWithAuth } from '../../utils/api';
 import './PropertyDetails.css';
 
 const PropertyDetails = () => {
@@ -22,9 +23,8 @@ const PropertyDetails = () => {
         return;
       }
 
-      const response = await fetch(`/api/properties/${id}?t=${Date.now()}`, {
+      const response = await fetchWithAuth(`/api/properties/${id}?t=${Date.now()}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Cache-Control': 'no-cache'
         },
         cache: 'no-store'
@@ -79,11 +79,8 @@ const PropertyDetails = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/owner/properties/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const response = await fetchWithAuth(`/api/owner/properties/${id}`, {
+        method: 'DELETE'
       });
 
       if (response.ok) {

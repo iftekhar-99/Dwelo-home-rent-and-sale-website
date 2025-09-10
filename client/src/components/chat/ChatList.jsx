@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaSpinner, FaComments, FaSearch } from 'react-icons/fa';
+import { fetchWithAuth } from '../../utils/api';
 import './ChatList.css';
 
 const ChatList = ({ onSelectChat }) => {
@@ -15,12 +16,7 @@ const ChatList = ({ onSelectChat }) => {
   const fetchChats = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/chats', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetchWithAuth('/api/chats');
       
       const data = await response.json();
       if (response.ok && data.success) {

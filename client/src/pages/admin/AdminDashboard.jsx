@@ -64,7 +64,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('adminToken');
       const headers = { Authorization: `Bearer ${token}` };
-      await axios.put(`/api/admin/properties/${propertyId}/approve`, { action, reason }, { headers });
+      await api.put(`/api/admin/properties/${propertyId}/approve`, { action, reason });
       fetchDashboardData();
       setSelectedProperty(null);
     } catch (error) {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaComments } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../../utils/api';
 import './ChatButton.css';
 
 const ChatButton = ({ propertyId, recipientId }) => {
@@ -17,9 +18,7 @@ const ChatButton = ({ propertyId, recipientId }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      const response = await fetch('/api/chats/unread', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetchWithAuth('/api/chats/unread');
       const data = await response.json();
       if (response.ok && data.success) setUnreadCount(data.data.unreadCount);
     } catch (error) {

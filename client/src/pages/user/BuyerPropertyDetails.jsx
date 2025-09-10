@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaEye, FaHeart, FaEnvelope, FaPhone, FaBookmark, FaRegBookmark, FaComments, FaHandshake } from 'react-icons/fa';
 import { ChatInterface } from "../../components/chat";
+import { fetchWithAuth } from '../../utils/api';
 import '../common/PropertyDetails.css';
 
 const BuyerPropertyDetails = () => {
@@ -46,9 +47,7 @@ const BuyerPropertyDetails = () => {
         return;
       }
 
-      const response = await fetch(`/api/properties/${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetchWithAuth(`/api/properties/${id}`);
       const data = await response.json();
 
       if (response.ok && data.success) {
@@ -78,10 +77,7 @@ const BuyerPropertyDetails = () => {
 
   const fetchOwnerContact = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/requests/owner-contact/${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetchWithAuth(`/api/requests/owner-contact/${id}`);
       const data = await response.json();
       if (response.ok && data.success) setOwnerContact(data.ownerContact);
     } catch (error) {
@@ -93,9 +89,7 @@ const BuyerPropertyDetails = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      const response = await fetch(`/api/wishlist/check/${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetchWithAuth(`/api/wishlist/check/${id}`);
       const data = await response.json();
       if (response.ok && data.success) setIsInWishlist(data.data.isInWishlist);
     } catch (error) {
@@ -109,15 +103,15 @@ const BuyerPropertyDetails = () => {
       if (!token) { navigate('/login'); return; }
 
       if (isInWishlist) {
-        const response = await fetch(`/api/wishlist/${id}`, {
-          method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
+        const response = await fetchWithAuth(`/api/wishlist/${id}`, {
+          method: 'DELETE'
         });
         const data = await response.json();
         if (response.ok && data.success) { setIsInWishlist(false); alert('Property removed from wishlist'); }
         else { alert(data.message || 'Failed to remove from wishlist'); }
       } else {
-        const response = await fetch('/api/wishlist/add', {
-          method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        const response = await fetchWithAuth('/api/wishlist/add', {
+          method: 'POST',
           body: JSON.stringify({ propertyId: id })
         });
         const data = await response.json();
@@ -194,8 +188,8 @@ const BuyerPropertyDetails = () => {
         offerAmount: offerAmount ? parseFloat(offerAmount) : undefined,
         preferredMoveInDate: preferredMoveInDate || undefined
       };
-      const response = await fetch('/api/property-requests', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      const response = await fetchWithAuth('/api/property-requests', {
+        method: 'POST',
         body: JSON.stringify(requestData)
       });
       const data = await response.json();

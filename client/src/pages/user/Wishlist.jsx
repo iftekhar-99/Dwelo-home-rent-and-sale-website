@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaHome, FaList, FaHeart, FaUser, FaSignOutAlt, FaEnvelope, FaTrash } from 'react-icons/fa';
 import { ChatButton } from "../../components/chat";
+import { fetchWithAuth } from '../../utils/api';
 import './Wishlist.css';
 
 const Wishlist = () => {
@@ -52,11 +53,7 @@ const Wishlist = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/wishlist', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetchWithAuth('/api/wishlist');
       
       const data = await response.json();
       if (response.ok && data.success) {
@@ -78,12 +75,9 @@ const Wishlist = () => {
   const removeFromWishlist = async (propertyId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/wishlist/${propertyId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetchWithAuth(`/api/wishlist/${propertyId}`, {
+      method: 'DELETE'
+    });
       
       if (response.ok) {
         // Remove the item from the local state

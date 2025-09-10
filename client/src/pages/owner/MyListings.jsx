@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { FaEdit, FaTrash, FaEye, FaExclamationTriangle } from 'react-icons/fa';
+import { useNavigate, Link } from 'react-router-dom';
+import { FaPlus, FaEdit, FaTrash, FaEye, FaExclamationTriangle } from 'react-icons/fa';
+import { fetchWithAuth } from '../../utils/api';
 import './MyListings.css';
 
 const MyListings = () => {
@@ -23,9 +24,7 @@ const MyListings = () => {
       const token = localStorage.getItem('token');
       if (!token) { navigate('/login'); return; }
 
-      const response = await fetch('/api/owner/properties', {
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-      });
+      const response = await fetchWithAuth('/api/owner/properties');
       const data = await response.json();
 
       if (data.success) {
@@ -48,9 +47,9 @@ const MyListings = () => {
       if (['sold','rented','inactive'].includes(newStatus)) body.isActive = false;
       if (newStatus === 'approved') body.isActive = true;
 
-      const response = await fetch(`/api/owner/properties/${propertyId}`, {
+      const response = await fetchWithAuth(`/api/owner/properties/${propertyId}`, {
         method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'X-Update-Intent': 'owner-status-update' },
+        headers: { 'X-Update-Intent': 'owner-status-update' },
         body: JSON.stringify(body)
       });
 
@@ -77,9 +76,8 @@ const MyListings = () => {
   const handleDelete = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/owner/properties/${propertyToDelete._id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      const response = await fetchWithAuth(`/api/owner/properties/${propertyToDelete._id}`, {
+        method: 'DELETE'
       });
       const data = await response.json();
       if (data.success) {

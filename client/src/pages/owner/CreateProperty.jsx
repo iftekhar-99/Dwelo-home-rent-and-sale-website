@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUpload, FaTimes } from 'react-icons/fa';
+import { fetchWithAuth } from '../../utils/api';
 import './CreateProperty.css';
 
 const CreateProperty = () => {
@@ -140,12 +141,10 @@ const CreateProperty = () => {
         imageFormData.append(`images`, image);
       });
 
-      const uploadResponse = await fetch('/api/owner/upload-images', {
+      const uploadResponse = await fetchWithAuth('/api/owner/upload-images', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: imageFormData
+        body: imageFormData,
+        headers: {}
       });
 
       const uploadData = await uploadResponse.json();
@@ -172,12 +171,8 @@ const CreateProperty = () => {
         images: uploadData.data.images.map(img => img.url) // Extract just the URLs
       };
 
-      const propertyResponse = await fetch('/api/owner/properties', {
+      const propertyResponse = await fetchWithAuth('/api/owner/properties', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify(propertyData)
       });
 

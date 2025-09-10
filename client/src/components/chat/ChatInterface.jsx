@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ChatList from './ChatList';
 import UserChat from './UserChat';
 import { FaComments, FaTimes } from 'react-icons/fa';
+import { fetchWithAuth } from '../../utils/api';
 import './ChatInterface.css';
 
 const ChatInterface = ({ propertyId, recipientId, onClose, isMinimized, onToggleMinimize }) => {
@@ -22,12 +23,7 @@ const ChatInterface = ({ propertyId, recipientId, onClose, isMinimized, onToggle
   // Fetch unread message count
   const fetchUnreadCount = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/chats/unread', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetchWithAuth('/api/chats/unread');
       
       const data = await response.json();
       if (response.ok && data.success) {

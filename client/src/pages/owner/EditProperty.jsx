@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FaUpload, FaTimes, FaArrowLeft } from 'react-icons/fa';
+import { fetchWithAuth } from '../../utils/api';
 import './CreateProperty.css'; // Reuse the same CSS
 
 const EditProperty = () => {
@@ -51,11 +52,7 @@ const EditProperty = () => {
         return;
       }
 
-      const response = await fetch(`/api/properties/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetchWithAuth(`/api/properties/${id}`);
 
       const data = await response.json();
 
@@ -219,12 +216,10 @@ const EditProperty = () => {
           formData.append('images', image);
         });
         
-        const uploadResponse = await fetch('/api/upload', {
+        const uploadResponse = await fetchWithAuth('/api/upload', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          body: formData
+          body: formData,
+          headers: {}
         });
         
         const uploadData = await uploadResponse.json();
@@ -267,12 +262,10 @@ const EditProperty = () => {
 
       const updateUrl = `/api/owner/properties/${id}`;
       console.log('[EditProperty] Submitting update to', updateUrl, 'payload:', propertyData);
-      const propertyResponse = await fetch(updateUrl, {
+      const propertyResponse = await fetchWithAuth(updateUrl, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-          , 'X-Update-Intent': 'owner-edit-submit'
+          'X-Update-Intent': 'owner-edit-submit'
         },
         body: JSON.stringify(propertyData)
       });

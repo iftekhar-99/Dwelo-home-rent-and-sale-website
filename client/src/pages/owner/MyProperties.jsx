@@ -46,11 +46,8 @@ const MyProperties = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/owner/properties/${propertyId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const response = await fetchWithAuth(`/api/owner/properties/${propertyId}`, {
+        method: 'DELETE'
       });
 
       if (response.ok) {

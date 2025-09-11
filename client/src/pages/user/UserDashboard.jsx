@@ -6,6 +6,8 @@ import { FaHome, FaHeart, FaSignOutAlt, FaEnvelope, FaUserCircle } from 'react-i
 import UserProfile from './UserProfile';
 import './UserDashboard.css';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5002';
+
 const UserDashboard = () => {
   const [user, setUser] = useState(null);
   const [properties, setProperties] = useState([]);
@@ -456,7 +458,7 @@ const UserDashboard = () => {
                   <div className="property-image">
                     {property.images && property.images.length > 0 ? (
                       <img 
-                        src={property.images[0].url.startsWith('http') ? property.images[0].url : `http://localhost:5002${property.images[0].url}`} 
+                        src={property.images[0].url.startsWith('http') ? property.images[0].url : `${API_BASE}${property.images[0].url}`} 
                         alt={property.title}
                         onError={(e) => {
                           console.log('Image failed to load:', e.target.src);

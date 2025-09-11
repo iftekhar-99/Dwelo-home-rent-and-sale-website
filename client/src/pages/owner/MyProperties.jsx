@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { FaEye, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import { fetchWithAuth } from '../../utils/api';
 import './MyProperties.css';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5002';
 
 const MyProperties = () => {
   const navigate = useNavigate();
@@ -107,7 +109,7 @@ const MyProperties = () => {
               <div className="property-image">
                 <img 
                   src={property.images && property.images.length > 0 && property.images[0].url ? 
-                    (property.images[0].url.startsWith('http') ? property.images[0].url : `http://localhost:5002${property.images[0].url}`) : 
+                    (property.images[0].url.startsWith('http') ? property.images[0].url : `${API_BASE}${property.images[0].url}`) : 
                     '/placeholder-property.jpg'} 
                   alt={property.title} 
                   onError={(e) => {

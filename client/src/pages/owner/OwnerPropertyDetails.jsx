@@ -4,6 +4,8 @@ import { FaArrowLeft, FaEdit, FaTrash, FaEye, FaHeart, FaMapMarkerAlt, FaBed, Fa
 import { fetchWithAuth } from '../../utils/api';
 import './OwnerPropertyDetails.css';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5002';
+
 const OwnerPropertyDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -148,8 +150,8 @@ const OwnerPropertyDetails = () => {
               <div className="main-image">
                 <img 
                   src={typeof property.images[0] === 'string' ? 
-                    (property.images[0].startsWith('http') ? property.images[0] : `http://localhost:5002${property.images[0]}`) : 
-                    (property.images[0].url.startsWith('http') ? property.images[0].url : `http://localhost:5002${property.images[0].url}`)} 
+                    (property.images[0].startsWith('http') ? property.images[0] : `${API_BASE}${property.images[0]}`) : 
+                    (property.images[0].url.startsWith('http') ? property.images[0].url : `${API_BASE}${property.images[0].url}`)} 
                   alt={property.title}
                   onError={(e) => { e.target.src = '/placeholder-property.jpg'; }}
                 />
@@ -160,8 +162,8 @@ const OwnerPropertyDetails = () => {
                     <img 
                       key={index}
                       src={typeof image === 'string' ? 
-                        (image.startsWith('http') ? image : `http://localhost:5002${image}`) : 
-                        (image.url.startsWith('http') ? image.url : `http://localhost:5002${image.url}`)} 
+                        (image.startsWith('http') ? image : `${API_BASE}${image}`) : 
+                        (image.url.startsWith('http') ? image.url : `${API_BASE}${image.url}`)} 
                       alt={`${property.title} ${index + 2}`}
                       onError={(e) => { e.target.src = '/placeholder-property.jpg'; }}
                     />

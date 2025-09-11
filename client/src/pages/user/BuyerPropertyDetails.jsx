@@ -5,6 +5,8 @@ import { ChatInterface } from "../../components/chat";
 import { fetchWithAuth } from '../../utils/api';
 import '../common/PropertyDetails.css';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5002';
+
 const BuyerPropertyDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -274,8 +276,8 @@ const BuyerPropertyDetails = () => {
               <div className="main-image">
                 <img 
                   src={typeof property.images[0] === 'string' ? 
-                    (property.images[0].startsWith('http') ? property.images[0] : `http://localhost:5002${property.images[0]}`) : 
-                    (property.images[0].url.startsWith('http') ? property.images[0].url : `http://localhost:5002${property.images[0].url}`)} 
+                    (property.images[0].startsWith('http') ? property.images[0] : `${API_BASE}${property.images[0]}`) : 
+                    (property.images[0].url.startsWith('http') ? property.images[0].url : `${API_BASE}${property.images[0].url}`)} 
                   alt={`${property.title}`}
                   onError={(e) => { e.target.src = '/placeholder-property.jpg'; }}
                 />

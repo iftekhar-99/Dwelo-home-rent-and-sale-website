@@ -6,6 +6,8 @@ import { BsFillHouseDoorFill, BsGraphUp } from 'react-icons/bs';
 import { ChatButton } from "../../components/chat";
 import { fetchWithAuth } from '../../utils/api';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5002';
+
 const OwnerDashboard = () => {
   const [stats, setStats] = useState({
     totalProperties: 0,
@@ -230,7 +232,7 @@ const OwnerDashboard = () => {
                           <div className="property-image-small">
                             <img 
                               src={property.images && property.images.length > 0 && property.images[0].url ? 
-                                (property.images[0].url.startsWith('http') ? property.images[0].url : `http://localhost:5002${property.images[0].url}`) : 
+                                (property.images[0].url.startsWith('http') ? property.images[0].url : `${API_BASE}${property.images[0].url}`) : 
                                 '/placeholder-property.jpg'} 
                               alt={property.title} 
                               onError={(e) => {
